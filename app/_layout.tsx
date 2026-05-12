@@ -4,6 +4,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { PaperProvider } from "react-native-paper";
+import { AuthProvider } from "./contexts/AuthContext";
 
 // Congela a Splash Screen
 SplashScreen.preventAutoHideAsync();
@@ -27,13 +28,15 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <PaperProvider theme={theme}>
-      <ThemeProvider value={theme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="login" />
-          <Stack.Screen name="(tabs)" />
-        </Stack>
-      </ThemeProvider>
-    </PaperProvider>
+    <AuthProvider>
+      <PaperProvider theme={theme}>
+        <ThemeProvider value={theme}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="login" />
+            <Stack.Screen name="(tabs)" />
+          </Stack>
+        </ThemeProvider>
+      </PaperProvider>
+    </AuthProvider>
   );
 }
