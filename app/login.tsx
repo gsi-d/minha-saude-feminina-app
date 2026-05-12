@@ -1,9 +1,11 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { Button, Text, TextInput, useTheme } from "react-native-paper";
+import { useAuth } from "./contexts/AuthContext";
 
 export default function LoginScreen() {
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -12,13 +14,18 @@ export default function LoginScreen() {
   const theme = useTheme();
   const router = useRouter();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setLoading(true);
+    
+    const sucesso = await login(email, password);
 
-    setTimeout(() => {
-      setLoading(false);
-      router.replace("/(tabs)");
-    }, 800);
+    setLoading(false);
+
+    if (sucesso) {
+      router.replace('/(tabs)');
+    } else {
+      Alert.alert('Erro', 'E-mail ou senha inválidos.');
+    }
   };
 
   return (
