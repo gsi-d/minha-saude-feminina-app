@@ -1,8 +1,9 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Tabs } from "expo-router";
+import React from "react";
 
-import { AppTheme } from '@/constants/theme';
-import { useTheme } from 'react-native-paper';
+import { AppTheme } from "@/constants/theme";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTheme } from "react-native-paper";
 
 export default function TabLayout() {
   const theme = useTheme<AppTheme>();
@@ -11,19 +12,35 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.outline,
+        tabBarStyle: {
+          backgroundColor: "#FFFF",
+          borderTopColor: theme.colors.surfaceVariant,
+          elevation: 8,
+        },
         headerShown: false,
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          
+          title: "Home",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="forum-outline"
+              size={size}
+              color={color}
+            />
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="conteudos"
         options={{
-          title: 'Explore'
+          title: "Conteúdos",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="leaf" size={size} color={color} />
+          ),
         }}
       />
     </Tabs>

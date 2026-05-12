@@ -1,34 +1,36 @@
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
-import { Button, Text, TextInput, useTheme } from 'react-native-paper';
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
+import { Button, Text, TextInput, useTheme } from "react-native-paper";
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const theme = useTheme();
   const router = useRouter();
 
   const handleLogin = () => {
     setLoading(true);
-    
+
     setTimeout(() => {
       setLoading(false);
-      router.replace('/(tabs)');
-    }, 1500);
+      router.replace("/(tabs)");
+    }, 800);
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
       <View style={styles.content}>
-        
-        <Text variant="displaySmall" style={[styles.title, { color: theme.colors.primary }]}>
+        <Text
+          variant="displaySmall"
+          style={[styles.title, { color: theme.colors.primary }]}
+        >
           Ciclo+
         </Text>
         <Text variant="bodyLarge" style={styles.subtitle}>
@@ -54,9 +56,9 @@ export default function LoginScreen() {
           onChangeText={setPassword}
           left={<TextInput.Icon icon="lock-outline" />}
           right={
-            <TextInput.Icon 
-              icon={showPassword ? "eye-off-outline" : "eye-outline"} 
-              onPress={() => setShowPassword(!showPassword)} 
+            <TextInput.Icon
+              icon={showPassword ? "eye-off-outline" : "eye-outline"}
+              onPress={() => setShowPassword(!showPassword)}
             />
           }
           style={styles.input}
@@ -66,29 +68,28 @@ export default function LoginScreen() {
           mode="contained"
           onPress={handleLogin}
           loading={loading}
-          disabled={loading || email.length === 0 || password.length === 0} 
+          disabled={loading || !email || !password}
           style={styles.button}
           contentStyle={styles.buttonContent}
         >
           Entrar
         </Button>
 
-        <Button 
-          mode="outlined" 
-          onPress={() => console.log('Navegar para tela de cadastro')}
+        <Button
+          mode="outlined"
+          onPress={() => console.log("Navegar para tela de cadastro")}
           style={styles.registerButton}
         >
           Criar minha conta
         </Button>
 
-        <Button 
-          mode="text" 
-          onPress={() => console.log('Recuperar senha')}
+        <Button
+          mode="text"
+          onPress={() => console.log("Recuperar senha")}
           style={styles.forgotPassword}
         >
           Esqueci minha senha
         </Button>
-
       </View>
     </KeyboardAvoidingView>
   );
@@ -100,16 +101,16 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingHorizontal: 24,
   },
   title: {
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 32,
     opacity: 0.7,
   },
@@ -129,5 +130,5 @@ const styles = StyleSheet.create({
   },
   forgotPassword: {
     marginTop: 8,
-  }
+  },
 });
