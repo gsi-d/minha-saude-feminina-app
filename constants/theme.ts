@@ -1,14 +1,14 @@
 import {
   DarkTheme as NavigationDarkTheme,
   DefaultTheme as NavigationDefaultTheme,
-  Theme as NavigationTheme // <-- Importamos o tipo base do Navigation
-} from '@react-navigation/native';
+  Theme as NavigationTheme, // <-- Importamos o tipo base do Navigation
+} from "@react-navigation/native";
 import {
   adaptNavigationTheme,
   MD3DarkTheme,
   MD3LightTheme,
-  MD3Theme // <-- Importamos o tipo base do Paper
-} from 'react-native-paper';
+  MD3Theme, // <-- Importamos o tipo base do Paper
+} from "react-native-paper";
 
 // 1. A MÁGICA: Criamos um tipo que une os dois mundos!
 export type AppTheme = MD3Theme & NavigationTheme;
@@ -18,10 +18,11 @@ const { LightTheme, DarkTheme } = adaptNavigationTheme({
   reactNavigationDark: NavigationDarkTheme,
 });
 
-const brandPrimary = '#C56682'; 
-const brandSecondary = '#FBD9E5';
-const brandSurface = '#FBF4EB';
-const brandError = '#b00020';
+const brandPrimary = "#C56682";
+const brandSecondary = "#FBD9E5";
+const brandTertiary = "#C43A4A";
+const brandSurface = "#FBF4EB";
+const brandError = "#b00020";
 
 export const AppLightTheme = {
   ...MD3LightTheme,
@@ -31,6 +32,7 @@ export const AppLightTheme = {
     ...LightTheme.colors,
     primary: brandPrimary,
     secondary: brandSecondary,
+    tertiary: brandTertiary,
     surface: brandSurface,
     error: brandError,
   },
