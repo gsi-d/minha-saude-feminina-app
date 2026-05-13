@@ -2,6 +2,7 @@ import { Tabs } from "expo-router";
 
 import BotaoAcoes from "@/components/BotaoAcoes";
 import { AppTheme } from "@/constants/theme";
+
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "react-native-paper";
 
@@ -11,25 +12,46 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
+        headerShown: false,
+
         tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.outline,
+        tabBarInactiveTintColor: "#8E8E93",
 
         tabBarStyle: {
           backgroundColor: "#FFFFFF",
-          borderTopColor: theme.colors.surfaceVariant,
+
+          borderTopColor:
+            theme.colors.surfaceVariant,
+
           borderTopWidth: 1,
-          elevation: 8,
-          height: 72,
-          paddingBottom: 8,
+
+          height: 74,
+
+          paddingBottom: 10,
           paddingTop: 8,
+
+          elevation: 10,
+
+          shadowColor: "#000",
+
+          shadowOffset: {
+            width: 0,
+            height: -2,
+          },
+
+          shadowOpacity: 0.05,
+          shadowRadius: 6,
         },
 
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: "600",
+          marginTop: -5
         },
 
-        headerShown: false,
+        tabBarItemStyle: {
+          paddingVertical: 4,
+        },
       }}
     >
       {/* --- HOME --- */}
@@ -38,10 +60,18 @@ export default function TabLayout() {
         options={{
           title: "Home",
 
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({
+            color,
+            size,
+            focused,
+          }) => (
             <MaterialCommunityIcons
-              name={focused ? "home" : "home-outline"}
-              size={size}
+              name={
+                focused
+                  ? "home"
+                  : "home-outline"
+              }
+              size={24}
               color={color}
             />
           ),
@@ -54,21 +84,24 @@ export default function TabLayout() {
         options={{
           title: "Ciclo",
 
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({
+            color,
+            focused,
+          }) => (
             <MaterialCommunityIcons
               name={
                 focused
-                  ? "calendar-month"
-                  : "calendar-month-outline"
+                  ? "heart"
+                  : "heart-outline"
               }
-              size={size}
+              size={24}
               color={color}
             />
           ),
         }}
       />
 
-      {/* --- AÇÕES --- */}
+      {/* --- BOTÃO CENTRAL --- */}
       <Tabs.Screen
         name="acoes"
         options={{
@@ -81,7 +114,6 @@ export default function TabLayout() {
         listeners={() => ({
           tabPress: (e) => {
             e.preventDefault();
-            console.log("Abrir registro de sintomas!");
           },
         })}
       />
@@ -92,14 +124,17 @@ export default function TabLayout() {
         options={{
           title: "Conteúdos",
 
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({
+            color,
+            focused,
+          }) => (
             <MaterialCommunityIcons
               name={
                 focused
-                  ? "newspaper-variant"
-                  : "newspaper-variant-outline"
+                  ? "leaf"
+                  : "leaf"
               }
-              size={size}
+              size={24}
               color={color}
             />
           ),
@@ -112,14 +147,17 @@ export default function TabLayout() {
         options={{
           title: "Perfil",
 
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({
+            color,
+            focused,
+          }) => (
             <MaterialCommunityIcons
               name={
                 focused
                   ? "account-circle"
                   : "account-circle-outline"
               }
-              size={size}
+              size={24}
               color={color}
             />
           ),
