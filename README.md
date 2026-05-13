@@ -1,50 +1,162 @@
-# Welcome to your Expo app 👋
+# 🌸 Ciclo+
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> Tecnologia, cuidado e informação para acompanhar cada fase da saúde feminina.
 
-## Get started
+O **Ciclo+** é um aplicativo mobile desenvolvido para auxiliar mulheres no acompanhamento do ciclo menstrual, monitoramento de sintomas, bem-estar e acesso à informação sobre saúde feminina de forma prática, intuitiva e segura.
 
-1. Install dependencies
+O aplicativo busca unir tecnologia, prevenção e autocuidado em uma única plataforma, oferecendo ferramentas inteligentes para monitoramento da saúde e apoio à usuária no dia a dia.
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+# 🎯 Objetivo do Projeto
 
-   ```bash
-   npx expo start
-   ```
+O objetivo do **Ciclo+** é oferecer uma plataforma acessível e segura para acompanhamento da saúde feminina, auxiliando no monitoramento do ciclo menstrual, sintomas ginecológicos, hábitos saudáveis e acesso à informação preventiva.
 
-In the output, you'll find options to open the app in a
+Além disso, o aplicativo busca incentivar:
+- o autocuidado;
+- a prevenção;
+- a educação em saúde;
+- o acompanhamento contínuo da saúde da mulher.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+# ✨ Funcionalidades
 
-## Get a fresh project
+## 🔐 Autenticação
 
-When you're ready, run:
+- Cadastro de usuária
+- Login seguro
+- Persistência de sessão
+- Armazenamento em nuvem
+- Criptografia de dados
 
-```bash
-npm run reset-project
+---
+
+## 📚 Conteúdos Educativos
+
+Acesso a conteúdos sobre:
+
+- Saúde ginecológica
+- Ciclo menstrual
+- TPM
+- Climatério
+- Menopausa
+- Saúde urinária
+- Prevenção
+- Autocuidado
+
+---
+
+# 🚀 Diferenciais do Projeto
+
+- 🔒 Privacidade e anonimato
+- 🌸 Interface intuitiva
+- 💬 Fórum seguro
+- ☁️ Sincronização em nuvem
+- 📱 Experiência mobile moderna
+- ❤️ Foco em prevenção e educação
+
+---
+
+# ⏳ Atualizações futuras
+
+## 🚨 Alertas Inteligentes
+
+O sistema reage às informações registradas pela usuária:
+
+- Alertas de atraso menstrual
+- Alertas de sintomas persistentes
+- Sugestão de procura médica
+- Lembretes preventivos
+- Monitoramento de possíveis sinais de risco
+
+---
+
+## 📅 Calendário Inteligente
+
+O calendário funciona como um diário visual da usuária, permitindo:
+
+- Registro do ciclo menstrual
+- Controle da duração e intensidade do fluxo
+- Registro de atrasos menstruais
+- Monitoramento de sintomas
+- Registro de humor
+- Registro de sangramentos fora do período
+- Controle de climatério e menopausa
+- Histórico completo de eventos
+
+---
+
+## 💬 Fórum Anônimo
+
+Espaço seguro para interação entre usuárias:
+
+- Criação de posts anônimos
+- Perguntas e respostas
+- Compartilhamento de experiências
+- Apoio da comunidade
+
+---
+
+# 🛠️ Tecnologias Utilizadas
+
+## Backend integrado ao Frontend Mobile
+- React Native
+- Expo
+- Node.js
+
+## Banco de Dados
+- PostgreSQL
+
+## Ferramentas
+- Git
+- GitHub
+- Supabase
+
+---
+
+# ⚙️ Fonte de Dados
+
+O app agora suporta duas fontes de dados:
+
+- `memory`: usa o banco fake em memória para desenvolvimento de layout e fluxo
+- `supabase`: usa o backend real via Supabase
+
+Crie um arquivo `.env` na raiz do projeto a partir do `.env.example`:
+
+```env
+EXPO_PUBLIC_DATA_SOURCE=memory
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Para continuar usando dados fake:
 
-## Learn more
+```env
+EXPO_PUBLIC_DATA_SOURCE=memory
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Para trocar para Supabase:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```env
+EXPO_PUBLIC_DATA_SOURCE=supabase
+EXPO_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anon
+```
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+# 🔄 Fluxo de Navegação
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```text
+Login
+   ↓
+Home
+   ↓
+Calendário
+   ↓
+Registro de Sintomas
+   ↓
+Alertas Inteligentes
+   ↓
+Conteúdos e Recomendações

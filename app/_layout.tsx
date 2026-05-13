@@ -4,7 +4,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { PaperProvider } from "react-native-paper";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider } from "../contexts/AuthContext";
 
 // Congela a Splash Screen
 SplashScreen.preventAutoHideAsync();
@@ -33,6 +33,8 @@ export default function RootLayout() {
         <ThemeProvider value={theme}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="login" />
+            <Stack.Screen name="cadastro" />
+            <Stack.Screen name="cadastroGestante" />
             <Stack.Screen name="(tabs)" />
           </Stack>
         </ThemeProvider>

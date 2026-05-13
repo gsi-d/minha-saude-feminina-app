@@ -7,7 +7,14 @@ import { IconButton, Text, useTheme } from "react-native-paper";
 export default function ConteudoDetalheScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { titulo, resumo } = useLocalSearchParams();
+
+  // Captura as variáveis enviadas pela navegação
+  const { titulo, resumo, conteudoCompleto, tag } = useLocalSearchParams();
+
+  // Formata a tag para garantir que ela exista e a primeira letra fique maiúscula
+  const tagFormatada = tag
+    ? String(tag).charAt(0).toUpperCase() + String(tag).slice(1)
+    : "Artigo";
 
   return (
     <View
@@ -22,26 +29,20 @@ export default function ConteudoDetalheScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+
+        {/* Título dinâmico */}
         <Text variant="headlineMedium" style={styles.title}>
           {titulo}
         </Text>
 
+        {/* Tag dinâmica vinda da aba anterior */}
         <View style={[styles.tag, { backgroundColor: theme.colors.primary }]}>
-          <Text style={styles.tagText}>Menstruação</Text>
+          <Text style={styles.tagText}>{tagFormatada}</Text>
         </View>
 
+        {/* Exibe o texto completo gigante, se não existir, usa o resumo */}
         <Text variant="bodyLarge" style={styles.contentBody}>
-          {resumo}
-          {"\n\n"}
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-          eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
-          minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-          aliquip ex ea commodo consequat.
-          {"\n\n"}
-          Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
-          dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-          proident, sunt in culpa qui officia deserunt mollit anim id est
-          laborum.
+          {conteudoCompleto || resumo}
         </Text>
 
         <View style={styles.infoBox}>
