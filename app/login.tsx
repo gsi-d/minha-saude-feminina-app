@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { Button, Text, TextInput, useTheme } from "react-native-paper";
-import { useAuth } from "./contexts/AuthContext";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -84,7 +84,7 @@ export default function LoginScreen() {
 
         <Button
           mode="outlined"
-          onPress={() => console.log("Navegar para tela de cadastro")}
+          onPress={() => router.push('/cadastro')}
           style={styles.registerButton}
         >
           Criar minha conta
