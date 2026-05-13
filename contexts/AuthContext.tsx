@@ -39,7 +39,7 @@ let usuariosDB: Usuario[] = [
     telefone: '11988888888',
   },
   {
-    id: '1',
+    id: '3',
     nome: 'Pessoa Padrão',
     email: 'pessoa@ciclo.com',
     senha: '123',
@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return new Promise<boolean>((resolve) => {
       setTimeout(() => {
         const userEncontrado = usuariosDB.find(u => u.email === email && u.senha === senha);
-        
+
         if (userEncontrado) {
           const { senha: _, ...userData } = userEncontrado;
           setUsuario(userData as Usuario);
@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, 800);
     });
   };
-
+  
   const cadastrar = async (dados: Omit<Usuario, 'id' | 'dataCadastro'>) => {
     return new Promise<boolean>((resolve) => {
       setTimeout(() => {
@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
 
         usuariosDB.push(novoUsuario);
-        
+
         const { senha: _, ...userData } = novoUsuario;
         setUsuario(userData as Usuario);
         resolve(true);

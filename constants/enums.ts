@@ -1,7 +1,7 @@
 export enum enumTipoUsuario {
-    Adolescente,
-    Gestante,
-    Tentante,
-    Menopausa,
-    NaoDefinido
+  Adolescente = 'Adolescente',
+  Gestante = 'Gestante',
+  Tentante = 'Tentante',
+  Menopausa = 'Menopausa',
+  NaoDefinido = 'NaoDefinido'
 }
