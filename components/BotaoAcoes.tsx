@@ -56,26 +56,17 @@ const BotaoAcoes = ({ onPress }: any) => {
             <TouchableOpacity
               key={index}
               activeOpacity={0.9}
-              style={[styles.optionWrapper, item.style]}
+              style={[styles.optionWrapper, item.style, {backgroundColor: item.background}]}
               onPress={() => {
                 console.log(item.label);
                 setMenuAberto(false);
               }}
             >
-              <View
-                style={[
-                  styles.optionButton,
-                  {
-                    backgroundColor: item.background,
-                  },
-                ]}
-              >
-                <MaterialCommunityIcons
-                  name={item.icon as any}
-                  size={22}
-                  color={item.color}
-                />
-              </View>
+              <MaterialCommunityIcons
+                name={item.icon as any}
+                size={22}
+                color={item.color}
+              />
 
               <Text style={styles.optionText}>
                 {item.label}
@@ -127,7 +118,7 @@ const styles = StyleSheet.create({
 
   menuContainer: {
     position: "absolute",
-    width: 180,
+    width: 220,
     height: 120,
     bottom: 58,
     alignItems: "center",
@@ -136,17 +127,12 @@ const styles = StyleSheet.create({
 
   optionWrapper: {
     position: "absolute",
-    alignItems: "center",
-    width: 72,
-  },
-
-  optionButton: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-
-    justifyContent: "center",
-    alignItems: "center",
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'column',
 
     shadowColor: "#000",
 
@@ -161,11 +147,11 @@ const styles = StyleSheet.create({
   },
 
   optionText: {
-    marginTop: 5,
+    marginTop: 4,
     fontSize: 10,
     fontWeight: "600",
     color: "#555",
-    textAlign: "center",
+    textAlign: 'center',
   },
 
   /* POSIÇÕES */
@@ -176,6 +162,7 @@ const styles = StyleSheet.create({
   },
 
   centerOption: {
+    left: 70,
     top: -4,
   },
 
@@ -199,6 +186,8 @@ const styles = StyleSheet.create({
 
     justifyContent: "center",
     alignItems: "center",
+
+    shadowColor: "#000",
 
     shadowOffset: {
       width: 0,

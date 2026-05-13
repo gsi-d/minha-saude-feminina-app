@@ -41,7 +41,7 @@ export default function PerfilScreen() {
       <Surface
         style={[
           styles.headerContainer,
-          { backgroundColor: theme.colors.primaryContainer },
+          { backgroundColor: "#FFF" },
         ]}
         elevation={1}
       >
@@ -236,6 +236,7 @@ export default function PerfilScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fff6f8",
   },
 
   contentContainer: {
@@ -287,6 +288,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#F0F0F0",
     marginBottom: 28,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   summaryContent: {
@@ -338,6 +344,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#F0F0F0",
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   listTitle: {

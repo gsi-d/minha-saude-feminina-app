@@ -120,7 +120,7 @@ export default function CadastroScreen() {
             style={styles.button}
             contentStyle={styles.buttonContent}
           >
-            Criar Conta
+            Avançar
           </Button>
 
           <Button

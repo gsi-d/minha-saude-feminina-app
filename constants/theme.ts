@@ -19,7 +19,7 @@ const { LightTheme, DarkTheme } = adaptNavigationTheme({
 });
 
 const brandPrimary = "#C56682";
-const brandSecondary = "#FBD9E5";
+const brandSecondary = "#fff6f8";
 const brandTertiary = "#C43A4A";
 const brandSurface = "#FBF4EB";
 const brandError = "#b00020";
@@ -34,6 +34,7 @@ export const AppLightTheme = {
     secondary: brandSecondary,
     tertiary: brandTertiary,
     surface: brandSurface,
+    background: "#fff6f8",
     error: brandError,
   },
   fonts: MD3LightTheme.fonts,
@@ -48,6 +49,7 @@ export const AppDarkTheme = {
     primary: brandPrimary,
     secondary: brandSecondary,
     surface: brandSurface,
+    background: "#fff6f8",
     error: brandError,
   },
   fonts: MD3DarkTheme.fonts,

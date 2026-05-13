@@ -13,7 +13,7 @@ export default function CicloScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFF",
+    backgroundColor: "#fff6f8",
   },
   appHeaderTitle: {
     textAlign: "center",
