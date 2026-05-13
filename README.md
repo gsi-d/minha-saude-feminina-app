@@ -32,35 +32,6 @@ Além disso, o aplicativo busca incentivar:
 
 ---
 
-## 💬 Fórum Anônimo
-
-Espaço seguro para interação entre usuárias:
-
-- Criação de posts anônimos
-- Perguntas e respostas
-- Compartilhamento de experiências
-- Apoio da comunidade
-
----
-
-## 💖 Bem-estar
-
-Checklist diário voltado ao autocuidado:
-
-### 🏃 Movimento
-- Controle de atividades físicas
-
-### 💧 Hidratação
-- Contador diário de água
-
-### 💤 Descanso
-- Registro da qualidade do sono
-
-### 📌 Dica do Dia
-- Orientações rápidas sobre saúde feminina
-
----
-
 ## 📚 Conteúdos Educativos
 
 Acesso a conteúdos sobre:
@@ -79,8 +50,6 @@ Acesso a conteúdos sobre:
 # 🚀 Diferenciais do Projeto
 
 - 🔒 Privacidade e anonimato
-- 📊 Monitoramento inteligente
-- 🩺 Alertas automáticos
 - 🌸 Interface intuitiva
 - 💬 Fórum seguro
 - ☁️ Sincronização em nuvem
@@ -118,37 +87,23 @@ O calendário funciona como um diário visual da usuária, permitindo:
 
 ---
 
-# 🧠 Arquitetura do Sistema
+## 💬 Fórum Anônimo
 
-O sistema utiliza arquitetura client-server.
+Espaço seguro para interação entre usuárias:
 
-## Frontend Mobile
-- React Native
-- Expo
-
-## Backend
-- Node.js
-- Express.js
-
-## Banco de Dados
-- PostgreSQL
-
-## Autenticação
-- JWT
-- Criptografia de dados
+- Criação de posts anônimos
+- Perguntas e respostas
+- Compartilhamento de experiências
+- Apoio da comunidade
 
 ---
 
 # 🛠️ Tecnologias Utilizadas
 
-## Mobile
+## Backend integrado ao Frontend Mobile
 - React Native
 - Expo
-- React Navigation
-
-## Backend
 - Node.js
-- Express
 
 ## Banco de Dados
 - PostgreSQL
@@ -156,7 +111,6 @@ O sistema utiliza arquitetura client-server.
 ## Ferramentas
 - Git
 - GitHub
-- Figma
 - Supabase
 
 ---
