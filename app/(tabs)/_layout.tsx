@@ -1,5 +1,4 @@
 import { Tabs } from "expo-router";
-import React from "react";
 
 import BotaoAcoes from "@/components/BotaoAcoes";
 import { AppTheme } from "@/constants/theme";
@@ -14,23 +13,34 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.outline,
+
         tabBarStyle: {
           backgroundColor: "#FFFFFF",
           borderTopColor: theme.colors.surfaceVariant,
+          borderTopWidth: 1,
           elevation: 8,
-          height: '7%', 
-          paddingBottom: 5,
+          height: 72,
+          paddingBottom: 8,
+          paddingTop: 8,
         },
+
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "600",
+        },
+
         headerShown: false,
       }}
     >
+      {/* --- HOME --- */}
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, size }) => (
+
+          tabBarIcon: ({ color, size, focused }) => (
             <MaterialCommunityIcons
-              name="forum-outline"
+              name={focused ? "home" : "home-outline"}
               size={size}
               color={color}
             />
@@ -38,21 +48,35 @@ export default function TabLayout() {
         }}
       />
 
+      {/* --- CICLO --- */}
       <Tabs.Screen
         name="ciclo"
         options={{
           title: "Ciclo",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="heart" size={size} color={color} />
+
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialCommunityIcons
+              name={
+                focused
+                  ? "calendar-month"
+                  : "calendar-month-outline"
+              }
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
 
+      {/* --- AÇÕES --- */}
       <Tabs.Screen
         name="acoes"
         options={{
           title: "",
-          tabBarButton: (props) => <BotaoAcoes {...props} />,
+
+          tabBarButton: (props) => (
+            <BotaoAcoes {...props} />
+          ),
         }}
         listeners={() => ({
           tabPress: (e) => {
@@ -62,22 +86,42 @@ export default function TabLayout() {
         })}
       />
 
+      {/* --- CONTEÚDOS --- */}
       <Tabs.Screen
         name="conteudos"
         options={{
           title: "Conteúdos",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="leaf" size={size} color={color} />
+
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialCommunityIcons
+              name={
+                focused
+                  ? "newspaper-variant"
+                  : "newspaper-variant-outline"
+              }
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
 
+      {/* --- PERFIL --- */}
       <Tabs.Screen
         name="perfil"
         options={{
           title: "Perfil",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="face-woman-profile" size={size} color={color} />
+
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialCommunityIcons
+              name={
+                focused
+                  ? "account-circle"
+                  : "account-circle-outline"
+              }
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
