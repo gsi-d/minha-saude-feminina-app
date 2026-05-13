@@ -24,17 +24,17 @@ const BotaoAcoes = ({ onPress }: any) => {
   const opcoes = [
     {
       icon: "pill",
-      label: "Remédios",
-      color: "#22C55E",
-      background: "#EEFCEB",
+      label: "Menstruação",
+      color: "#c52222",
+      background: "#ffeeee",
       style: styles.leftOption,
     },
 
     {
       icon: "clipboard-pulse-outline",
       label: "Sintomas",
-      color: "#EC4899",
-      background: "#FDE7F3",
+      color: "#366600",
+      background: "#ebffd4",
       style: styles.centerOption,
     },
 
