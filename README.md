@@ -8,22 +8,6 @@ O aplicativo busca unir tecnologia, prevenção e autocuidado em uma única plat
 
 ---
 
-# 📱 Preview do Aplicativo
-
-## Telas do Sistema
-
-| Login | Home | Calendário |
-|---|---|---|
-| *Imagem da tela* | *Imagem da tela* | *Imagem da tela* |
-
-| Fórum | Bem-estar | Conteúdos |
-|---|---|---|
-| *Imagem da tela* | *Imagem da tela* | *Imagem da tela* |
-
-> Adicione aqui screenshots ou GIFs do aplicativo.
-
----
-
 # 🎯 Objetivo do Projeto
 
 O objetivo do **Ciclo+** é oferecer uma plataforma acessível e segura para acompanhamento da saúde feminina, auxiliando no monitoramento do ciclo menstrual, sintomas ginecológicos, hábitos saudáveis e acesso à informação preventiva.
@@ -60,18 +44,6 @@ O calendário funciona como um diário visual da usuária, permitindo:
 - Registro de sangramentos fora do período
 - Controle de climatério e menopausa
 - Histórico completo de eventos
-
----
-
-## 🚨 Alertas Inteligentes
-
-O sistema reage às informações registradas pela usuária:
-
-- Alertas de atraso menstrual
-- Alertas de sintomas persistentes
-- Sugestão de procura médica
-- Lembretes preventivos
-- Monitoramento de possíveis sinais de risco
 
 ---
 
@@ -129,6 +101,20 @@ Acesso a conteúdos sobre:
 - ☁️ Sincronização em nuvem
 - 📱 Experiência mobile moderna
 - ❤️ Foco em prevenção e educação
+
+---
+
+# ⏳ Atualizações futuras
+
+## 🚨 Alertas Inteligentes
+
+O sistema reage às informações registradas pela usuária:
+
+- Alertas de atraso menstrual
+- Alertas de sintomas persistentes
+- Sugestão de procura médica
+- Lembretes preventivos
+- Monitoramento de possíveis sinais de risco
 
 ---
 
