@@ -5,7 +5,7 @@ import { Button, Text, TextInput, useTheme } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function CadastroScreen() {
-  const { login } = useAuth();
+  const { iniciarCadastro } = useAuth();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -17,27 +17,23 @@ export default function CadastroScreen() {
   const theme = useTheme();
   const router = useRouter();
 
-  const handleRegister = async () => {
+  const handleRegister = () => {
     if (!nome || !email || !senha || !telefone || !dataNascimento) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos.');
       return;
     }
 
     setLoading(true);
-    
-    // TODO: Implementar chamada à API de cadastro
-    // const sucesso = await register(nome, email, senha, telefone, dataNascimento);
+
+    iniciarCadastro({
+      nome,
+      email,
+      senha,
+      telefone,
+      dataNascimento,
+    });
 
     setLoading(false);
-
-    // if (sucesso) {
-    //   Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
-    //   router.push('/cadastroGestante');
-    // } else {
-    //   Alert.alert('Erro', 'Erro ao realizar cadastro.');
-    // }
-
-    // Navegar para tela de cadastro da gestante
     router.push('/cadastroGestante');
   };
 

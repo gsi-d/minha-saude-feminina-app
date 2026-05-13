@@ -1,18 +1,13 @@
 import { enumTipoUsuario } from '@/constants/enums';
 import React, { createContext, ReactNode, useContext, useState } from 'react';
+import {
+  type CadastroBasico,
+  finalizeCadastroEmMemoria,
+  type PerfilCadastro,
+  type UsuarioAuth,
+} from './authRegistration';
 
-
-export interface Usuario {
-  id: string;
-  nome: string;
-  email: string;
-  senha?: string;
-  dataNascimento: string;
-  tipoUsuario: enumTipoUsuario;
-  administrador: boolean;
-  dataCadastro: string;
-  telefone: string;
-}
+export interface Usuario extends UsuarioAuth {}
 
 // 2. Nosso "Banco de Dados" em memória
 let usuariosDB: Usuario[] = [
@@ -53,8 +48,10 @@ let usuariosDB: Usuario[] = [
 
 interface AuthContextData {
   usuario: Usuario | null;
+  cadastroPendente: CadastroBasico | null;
   login: (email: string, senha: string) => Promise<boolean>;
-  cadastrar: (novoUsuario: Omit<Usuario, 'id' | 'dataCadastro'>) => Promise<boolean>;
+  iniciarCadastro: (dados: CadastroBasico) => void;
+  finalizarCadastro: (perfil: PerfilCadastro) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -62,6 +59,7 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [cadastroPendente, setCadastroPendente] = useState<CadastroBasico | null>(null);
 
   // Simula uma chamada assíncrona ao banco
   const login = async (email: string, senha: string) => {
@@ -79,26 +77,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, 800);
     });
   };
-  
-  const cadastrar = async (dados: Omit<Usuario, 'id' | 'dataCadastro'>) => {
+
+  const iniciarCadastro = (dados: CadastroBasico) => {
+    setCadastroPendente(dados);
+  };
+
+  const finalizarCadastro = async (perfil: PerfilCadastro) => {
     return new Promise<boolean>((resolve) => {
       setTimeout(() => {
-        const emailJaExiste = usuariosDB.some(u => u.email === dados.email);
-        if (emailJaExiste) {
+        if (!cadastroPendente) {
           resolve(false);
           return;
         }
 
-        const novoUsuario: Usuario = {
-          ...dados,
-          id: Math.random().toString(36).substring(2, 9),
-          dataCadastro: new Date().toISOString(),
-        };
+        const resultado = finalizeCadastroEmMemoria(usuariosDB, cadastroPendente, perfil);
+        if (!resultado.success || !resultado.novoUsuario) {
+          resolve(false);
+          return;
+        }
 
-        usuariosDB.push(novoUsuario);
-
-        const { senha: _, ...userData } = novoUsuario;
+        usuariosDB = resultado.usuariosAtualizados;
+        const { senha: _, ...userData } = resultado.novoUsuario;
         setUsuario(userData as Usuario);
+        setCadastroPendente(null);
         resolve(true);
       }, 800);
     });
@@ -109,7 +110,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ usuario, login, cadastrar, logout }}>
+    <AuthContext.Provider
+      value={{ usuario, cadastroPendente, login, iniciarCadastro, finalizarCadastro, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
