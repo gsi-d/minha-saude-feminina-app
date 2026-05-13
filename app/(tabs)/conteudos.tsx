@@ -1,7 +1,7 @@
 import { enumTipoUsuario } from "@/constants/enums";
+import { useAuth } from "@/contexts/AuthContext";
 import { createConteudosRepositoryFromEnv } from "@/data/conteudos/conteudos.repository";
 import type { Conteudo } from "@/domain/conteudos/types";
-import { useAuth } from "@/contexts/AuthContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
@@ -210,7 +210,7 @@ export default function ConteudosScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFF" },
+  container: { flex: 1, backgroundColor: "#fff6f8" },
   appHeaderTitle: {
     textAlign: "center",
     paddingTop: 40,
@@ -246,6 +246,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#F0F0F0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   cardTitle: { fontWeight: "bold", marginBottom: 8, color: "#000" },
   cardExcerpt: { color: "#666", marginBottom: 16, lineHeight: 20 },
