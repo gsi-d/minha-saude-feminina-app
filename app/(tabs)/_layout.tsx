@@ -1,8 +1,8 @@
 import { Tabs } from "expo-router";
-import React from "react";
 
 import BotaoAcoes from "@/components/BotaoAcoes";
 import { AppTheme } from "@/constants/theme";
+
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "react-native-paper";
 
@@ -12,72 +12,154 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
+        headerShown: false,
+
         tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.outline,
+        tabBarInactiveTintColor: "#8E8E93",
+
         tabBarStyle: {
           backgroundColor: "#FFFFFF",
-          borderTopColor: theme.colors.surfaceVariant,
-          elevation: 8,
-          height: '7%', 
-          paddingBottom: 5,
+
+          borderTopColor:
+            theme.colors.surfaceVariant,
+
+          borderTopWidth: 1,
+
+          height: 74,
+
+          paddingBottom: 10,
+          paddingTop: 8,
+
+          elevation: 10,
+
+          shadowColor: "#000",
+
+          shadowOffset: {
+            width: 0,
+            height: -2,
+          },
+
+          shadowOpacity: 0.05,
+          shadowRadius: 6,
         },
-        headerShown: false,
+
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "600",
+          marginTop: -5
+        },
+
+        tabBarItemStyle: {
+          paddingVertical: 4,
+        },
       }}
     >
+      {/* --- HOME --- */}
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, size }) => (
+
+          tabBarIcon: ({
+            color,
+            size,
+            focused,
+          }) => (
             <MaterialCommunityIcons
-              name="forum-outline"
-              size={size}
+              name={
+                focused
+                  ? "home"
+                  : "home-outline"
+              }
+              size={24}
               color={color}
             />
           ),
         }}
       />
 
+      {/* --- CICLO --- */}
       <Tabs.Screen
         name="ciclo"
         options={{
           title: "Ciclo",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="heart" size={size} color={color} />
+
+          tabBarIcon: ({
+            color,
+            focused,
+          }) => (
+            <MaterialCommunityIcons
+              name={
+                focused
+                  ? "heart"
+                  : "heart-outline"
+              }
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
 
+      {/* --- BOTÃO CENTRAL --- */}
       <Tabs.Screen
         name="acoes"
         options={{
           title: "",
-          tabBarButton: (props) => <BotaoAcoes {...props} />,
+
+          tabBarButton: (props) => (
+            <BotaoAcoes {...props} />
+          ),
         }}
         listeners={() => ({
           tabPress: (e) => {
             e.preventDefault();
-            console.log("Abrir registro de sintomas!");
           },
         })}
       />
 
+      {/* --- CONTEÚDOS --- */}
       <Tabs.Screen
         name="conteudos"
         options={{
           title: "Conteúdos",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="leaf" size={size} color={color} />
+
+          tabBarIcon: ({
+            color,
+            focused,
+          }) => (
+            <MaterialCommunityIcons
+              name={
+                focused
+                  ? "leaf"
+                  : "leaf"
+              }
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
 
+      {/* --- PERFIL --- */}
       <Tabs.Screen
         name="perfil"
         options={{
           title: "Perfil",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="face-woman-profile" size={size} color={color} />
+
+          tabBarIcon: ({
+            color,
+            focused,
+          }) => (
+            <MaterialCommunityIcons
+              name={
+                focused
+                  ? "account-circle"
+                  : "account-circle-outline"
+              }
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
