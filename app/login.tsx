@@ -1,6 +1,12 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  View,
+} from "react-native";
 import { Button, Text, TextInput, useTheme } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -16,15 +22,15 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     setLoading(true);
-    
+
     const sucesso = await login(email, password);
 
     setLoading(false);
 
     if (sucesso) {
-      router.replace('/(tabs)');
+      router.replace("/(tabs)");
     } else {
-      Alert.alert('Erro', 'E-mail ou senha inválidos.');
+      Alert.alert("Erro", "E-mail ou senha inválidos.");
     }
   };
 
@@ -84,7 +90,7 @@ export default function LoginScreen() {
 
         <Button
           mode="outlined"
-          onPress={() => router.push('/cadastro')}
+          onPress={() => router.push("/cadastro")}
           style={styles.registerButton}
         >
           Criar minha conta

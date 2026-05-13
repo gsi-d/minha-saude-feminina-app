@@ -33,6 +33,8 @@ export default function RootLayout() {
         <ThemeProvider value={theme}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="login" />
+            <Stack.Screen name="cadastro" />
+            <Stack.Screen name="cadastroGestante" />
             <Stack.Screen name="(tabs)" />
           </Stack>
         </ThemeProvider>
