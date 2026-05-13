@@ -32,21 +32,6 @@ Além disso, o aplicativo busca incentivar:
 
 ---
 
-## 📅 Calendário Inteligente
-
-O calendário funciona como um diário visual da usuária, permitindo:
-
-- Registro do ciclo menstrual
-- Controle da duração e intensidade do fluxo
-- Registro de atrasos menstruais
-- Monitoramento de sintomas
-- Registro de humor
-- Registro de sangramentos fora do período
-- Controle de climatério e menopausa
-- Histórico completo de eventos
-
----
-
 ## 💬 Fórum Anônimo
 
 Espaço seguro para interação entre usuárias:
@@ -115,6 +100,21 @@ O sistema reage às informações registradas pela usuária:
 - Sugestão de procura médica
 - Lembretes preventivos
 - Monitoramento de possíveis sinais de risco
+
+---
+
+## 📅 Calendário Inteligente
+
+O calendário funciona como um diário visual da usuária, permitindo:
+
+- Registro do ciclo menstrual
+- Controle da duração e intensidade do fluxo
+- Registro de atrasos menstruais
+- Monitoramento de sintomas
+- Registro de humor
+- Registro de sangramentos fora do período
+- Controle de climatério e menopausa
+- Histórico completo de eventos
 
 ---
 
