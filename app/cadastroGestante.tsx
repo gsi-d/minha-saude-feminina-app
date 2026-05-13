@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { Button, List, Text, TextInput, useTheme } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
-import { type PerfilCadastro } from "../contexts/authRegistration";
+import { type PerfilCadastro } from "../domain/auth/types";
 
 type SectionKey = "gravida" | "tentante" | "adolescente" | "menopausa";
 

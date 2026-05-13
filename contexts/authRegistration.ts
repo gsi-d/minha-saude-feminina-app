@@ -1,26 +1,10 @@
 import { enumTipoUsuario } from '../constants/enums';
-
-export type PerfilCadastro = 'gravida' | 'tentante' | 'adolescente' | 'menopausa';
-
-export interface CadastroBasico {
-  nome: string;
-  email: string;
-  senha: string;
-  dataNascimento: string;
-  telefone: string;
-}
-
-export interface UsuarioAuth extends CadastroBasico {
-  id: string;
-  tipoUsuario: enumTipoUsuario;
-  administrador: boolean;
-  dataCadastro: string;
-}
+import type { CadastroBasico, PerfilCadastro, Usuario } from '../domain/auth/types';
 
 interface FinalizarCadastroResultado {
   success: boolean;
-  novoUsuario?: UsuarioAuth;
-  usuariosAtualizados: UsuarioAuth[];
+  novoUsuario?: Usuario;
+  usuariosAtualizados: Usuario[];
 }
 
 export function mapPerfilParaTipoUsuario(perfil: PerfilCadastro): enumTipoUsuario {
@@ -39,7 +23,7 @@ export function mapPerfilParaTipoUsuario(perfil: PerfilCadastro): enumTipoUsuari
 export function buildUsuarioCadastro(
   dadosBasicos: CadastroBasico,
   perfil: PerfilCadastro
-): Omit<UsuarioAuth, 'id' | 'dataCadastro'> {
+): Omit<Usuario, 'id' | 'dataCadastro'> {
   return {
     ...dadosBasicos,
     tipoUsuario: mapPerfilParaTipoUsuario(perfil),
@@ -48,7 +32,7 @@ export function buildUsuarioCadastro(
 }
 
 export function finalizeCadastroEmMemoria(
-  usuariosAtuais: UsuarioAuth[],
+  usuariosAtuais: Usuario[],
   dadosBasicos: CadastroBasico,
   perfil: PerfilCadastro
 ): FinalizarCadastroResultado {
@@ -60,7 +44,7 @@ export function finalizeCadastroEmMemoria(
     };
   }
 
-  const novoUsuario: UsuarioAuth = {
+  const novoUsuario: Usuario = {
     ...buildUsuarioCadastro(dadosBasicos, perfil),
     id: Math.random().toString(36).substring(2, 9),
     dataCadastro: new Date().toISOString(),

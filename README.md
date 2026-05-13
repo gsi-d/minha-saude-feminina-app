@@ -157,6 +157,38 @@ O sistema utiliza arquitetura client-server.
 - Git
 - GitHub
 - Figma
+- Supabase
+
+---
+
+# ⚙️ Fonte de Dados
+
+O app agora suporta duas fontes de dados:
+
+- `memory`: usa o banco fake em memória para desenvolvimento de layout e fluxo
+- `supabase`: usa o backend real via Supabase
+
+Crie um arquivo `.env` na raiz do projeto a partir do `.env.example`:
+
+```env
+EXPO_PUBLIC_DATA_SOURCE=memory
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_ANON_KEY=
+```
+
+Para continuar usando dados fake:
+
+```env
+EXPO_PUBLIC_DATA_SOURCE=memory
+```
+
+Para trocar para Supabase:
+
+```env
+EXPO_PUBLIC_DATA_SOURCE=supabase
+EXPO_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anon
+```
 
 ---
 
