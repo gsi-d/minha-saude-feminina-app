@@ -27,7 +27,6 @@ const BotaoAcoes = ({ onPress }: any) => {
       label: "Menstruação",
       color: "#c52222",
       background: "#ffeeee",
-      style: styles.leftOption,
     },
 
     {
@@ -35,7 +34,6 @@ const BotaoAcoes = ({ onPress }: any) => {
       label: "Sintomas",
       color: "#366600",
       background: "#ebffd4",
-      style: styles.centerOption,
     },
 
     {
@@ -43,7 +41,6 @@ const BotaoAcoes = ({ onPress }: any) => {
       label: "Humor",
       color: "#F59E0B",
       background: "#FFF4DB",
-      style: styles.rightOption,
     },
   ];
 
@@ -56,17 +53,19 @@ const BotaoAcoes = ({ onPress }: any) => {
             <TouchableOpacity
               key={index}
               activeOpacity={0.9}
-              style={[styles.optionWrapper, item.style, {backgroundColor: item.background}]}
+              style={[styles.optionWrapper, { backgroundColor: item.background }]}
               onPress={() => {
                 console.log(item.label);
                 setMenuAberto(false);
               }}
             >
-              <MaterialCommunityIcons
-                name={item.icon as any}
-                size={22}
-                color={item.color}
-              />
+              <View style={[styles.iconWrapper, { backgroundColor: item.color }]}> 
+                <MaterialCommunityIcons
+                  name={item.icon as any}
+                  size={18}
+                  color="#FFF"
+                />
+              </View>
 
               <Text style={styles.optionText}>
                 {item.label}
@@ -118,58 +117,54 @@ const styles = StyleSheet.create({
 
   menuContainer: {
     position: "absolute",
-    width: 220,
-    height: 120,
-    bottom: 58,
+    width: 180,
+    bottom: 88,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-end",
+    rowGap: 8,
   },
 
   optionWrapper: {
-    position: "absolute",
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
+    minWidth: 160,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    flexDirection: 'column',
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginBottom: 8,
 
     shadowColor: "#000",
 
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
 
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  iconWrapper: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
   },
 
   optionText: {
-    marginTop: 4,
-    fontSize: 10,
+    fontSize: 14,
     fontWeight: "600",
-    color: "#555",
-    textAlign: 'center',
+    color: "#333",
+    textAlign: 'left',
   },
 
   /* POSIÇÕES */
 
-  leftOption: {
-    left: 0,
-    top: 28,
-  },
 
-  centerOption: {
-    left: 70,
-    top: -4,
-  },
-
-  rightOption: {
-    right: 0,
-    top: 28,
-  },
 
   /* FAB */
 
