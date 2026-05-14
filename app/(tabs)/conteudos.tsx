@@ -1,16 +1,13 @@
-import { enumTipoUsuario } from "@/constants/enums";
 import { useAuth } from "@/contexts/AuthContext";
-import { createConteudosRepositoryFromEnv } from "@/data/conteudos/conteudos.repository";
+import { createConteudosRepository } from "@/data/conteudos/conteudos.repository";
 import type { Conteudo } from "@/domain/conteudos/types";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Card, Text } from "react-native-paper";
 
-const conteudosRepository = createConteudosRepositoryFromEnv(
-  process.env as Record<string, string | undefined>,
-);
+const conteudosRepository = createConteudosRepository();
 
 const CORES_LAYOUT = {
   headerBackground: "#9B51E0",
@@ -32,18 +29,7 @@ export default function ConteudosScreen() {
   const { usuario } = useAuth();
   const [conteudosDaUsuaria, setConteudosDaUsuaria] = useState<Conteudo[]>([]);
   const [filtroAtivo, setFiltroAtivo] = useState("");
-
-  const tipoBruto = usuario?.tipoUsuario as string | undefined;
-
-  const tipoAtual = useMemo(() => {
-    if (!tipoBruto) return enumTipoUsuario.NaoDefinido;
-
-    const tipoEncontrado = Object.values(enumTipoUsuario).find(
-      (val) => val.toLowerCase() === tipoBruto.toLowerCase(),
-    );
-
-    return (tipoEncontrado as enumTipoUsuario) || enumTipoUsuario.NaoDefinido;
-  }, [tipoBruto]);
+  const tipoAtual = resolveTipoUsuario(usuario?.tipoUsuario);
 
   useEffect(() => {
     let ativo = true;

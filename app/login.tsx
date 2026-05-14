@@ -23,14 +23,20 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     setLoading(true);
 
-    const sucesso = await login(email, password);
+    try {
+      const sucesso = await login(email, password);
 
-    setLoading(false);
+      setLoading(false);
 
-    if (sucesso) {
-      router.replace("/(tabs)");
-    } else {
-      Alert.alert("Erro", "E-mail ou senha inválidos.");
+      if (sucesso) {
+        router.replace("/(tabs)");
+      } else {
+        Alert.alert("Erro", "E-mail ou senha inválidos.");
+      }
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+      Alert.alert("Erro", "Falha ao consultar login.");
     }
   };
 

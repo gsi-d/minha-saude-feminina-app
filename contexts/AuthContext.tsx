@@ -1,6 +1,6 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react';
 
-import { createAuthRepositoryFromEnv } from '../data/auth/auth.repository';
+import { createAuthRepository } from '../data/auth/auth.repository';
 import type { CadastroBasico, PerfilCadastro, Usuario } from '../domain/auth/types';
 
 interface AuthContextData {
@@ -14,7 +14,7 @@ interface AuthContextData {
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
-const authRepository = createAuthRepositoryFromEnv(process.env as Record<string, string | undefined>);
+const authRepository = createAuthRepository();
 
 function sanitizeUsuario(usuario: Usuario): Usuario {
   const { senha: _senha, ...userData } = usuario;
