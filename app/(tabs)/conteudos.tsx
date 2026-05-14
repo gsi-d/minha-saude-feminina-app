@@ -1,9 +1,10 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { createConteudosRepository } from "@/data/conteudos/conteudos.repository";
 import type { Conteudo } from "@/domain/conteudos/types";
+import { resolveTipoUsuario } from "@/utils/resolveTipoUsuario";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Card, Text } from "react-native-paper";
 
