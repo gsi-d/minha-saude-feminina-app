@@ -1,6 +1,14 @@
+import { enumTipoUsuario } from "@/constants/enums";
+import { useAuth } from "@/contexts/AuthContext";
+import { createConteudosRepository } from "@/data/conteudos/conteudos.repository";
+import { createDicasRepository } from "@/data/dicas/dicas.repository";
+import { Dica } from "@/data/dicas/dicas.types";
+import type { Conteudo } from "@/domain/conteudos/types";
+import { resolveTipoUsuario } from "@/utils/resolveTipoUsuario";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import React, { useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-
 import {
   Avatar,
   Card,
@@ -10,11 +18,162 @@ import {
   useTheme,
 } from "react-native-paper";
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+const conteudosRepository = createConteudosRepository();
+const dicasRepository = createDicasRepository();
+
+const HOME_CARD_CONFIG: Record<
+  enumTipoUsuario,
+  {
+    titulo: string;
+    subtitulo: string;
+    tagPrincipal: string;
+    tagsFallback: string[];
+    tagsDicas: string[];
+    descricaoVazia: string;
+  }
+> = {
+  [enumTipoUsuario.Adolescente]: {
+    titulo: "Ciclo Menstrual",
+    subtitulo: "Conteúdo recomendado para adolescentes",
+    tagPrincipal: "menstruação",
+    tagsFallback: ["bem-estar", "saúde"],
+    tagsDicas: ["menstruação", "bem-estar", "contracepção"],
+    descricaoVazia:
+      "Conteúdos sobre ciclo, fluxo e mudanças hormonais vão aparecer aqui para o seu perfil.",
+  },
+  [enumTipoUsuario.Gestante]: {
+    titulo: "Gestação",
+    subtitulo: "Conteúdo recomendado para sua fase atual",
+    tagPrincipal: "saúde",
+    tagsFallback: ["bem-estar"],
+    tagsDicas: ["saúde", "bem-estar"],
+    descricaoVazia:
+      "Informações sobre pré-natal, sintomas e bem-estar na gravidez vão aparecer aqui para o seu perfil.",
+  },
+  [enumTipoUsuario.Tentante]: {
+    titulo: "Janela Fértil",
+    subtitulo: "Conteúdo recomendado para tentantes",
+    tagPrincipal: "menstruação",
+    tagsFallback: ["saúde", "bem-estar"],
+    tagsDicas: ["menstruação", "saúde", "bem-estar"],
+    descricaoVazia:
+      "Conteúdos sobre ovulação, fertilidade e acompanhamento do ciclo vão aparecer aqui para o seu perfil.",
+  },
+  [enumTipoUsuario.Menopausa]: {
+    titulo: "Menopausa",
+    subtitulo: "Conteúdo recomendado para sua fase atual",
+    tagPrincipal: "saúde",
+    tagsFallback: ["bem-estar"],
+    tagsDicas: ["saúde", "bem-estar"],
+    descricaoVazia:
+      "Conteúdos sobre climatério, sintomas e qualidade de vida vão aparecer aqui para o seu perfil.",
+  },
+  [enumTipoUsuario.NaoDefinido]: {
+    titulo: "Saúde Feminina",
+    subtitulo: "Conteúdo recomendado para você",
+    tagPrincipal: "menstruação",
+    tagsFallback: ["saúde", "bem-estar"],
+    tagsDicas: ["menstruação", "saúde", "bem-estar"],
+    descricaoVazia:
+      "Defina seu perfil para receber recomendações mais específicas na Home.",
+  },
+};
+
+function selecionarConteudoDestaque(
+  conteudos: Conteudo[],
+  tipoUsuario: enumTipoUsuario,
+): Conteudo | null {
+  const config = HOME_CARD_CONFIG[tipoUsuario];
+  const tagsPrioritarias = [config.tagPrincipal, ...config.tagsFallback];
+
+  for (const tag of tagsPrioritarias) {
+    const conteudo = conteudos.find((item) => item.tag === tag);
+
+    if (conteudo) {
+      return conteudo;
+    }
+  }
+
+  return conteudos[0] ?? null;
+}
+
+function selecionarDicaAleatoria(dicas: Dica[]): Dica | null {
+  if (dicas.length === 0) {
+    return null;
+  }
+
+  const index = Math.floor(Math.random() * dicas.length);
+  return dicas[index] ?? null;
+}
 
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const { usuario } = useAuth();
+  const [conteudoDestaque, setConteudoDestaque] = useState<Conteudo | null>(null);
+  const [dicaDoDia, setDicaDoDia] = useState<Dica | null>(null);
+
+  const tipoAtual = useMemo(
+    () => resolveTipoUsuario(usuario?.tipoUsuario),
+    [usuario?.tipoUsuario],
+  );
+  const homeCardConfig = HOME_CARD_CONFIG[tipoAtual];
+  const tagsDicas = useMemo(
+    () => homeCardConfig.tagsDicas,
+    [homeCardConfig.tagsDicas],
+  );
+
+  useEffect(() => {
+    let ativo = true;
+
+    const loadHomeData = async () => {
+      const [conteudos, dicasPerfil, dicasFallback] = await Promise.all([
+        conteudosRepository.listByTipoUsuario(tipoAtual),
+        dicasRepository.listByTipoUsuarioAndTags(
+          tipoAtual,
+          tagsDicas,
+        ),
+        dicasRepository.listByTipoUsuarioAndTags(
+          enumTipoUsuario.NaoDefinido,
+          tagsDicas,
+        ),
+      ]);
+
+      if (!ativo) {
+        return;
+      }
+
+      setConteudoDestaque(selecionarConteudoDestaque(conteudos, tipoAtual));
+      setDicaDoDia(
+        selecionarDicaAleatoria(dicasPerfil) ??
+          selecionarDicaAleatoria(dicasFallback)
+      );
+    };
+
+    void loadHomeData();
+
+    return () => {
+      ativo = false;
+    };
+  }, [tagsDicas, tipoAtual]);
+
+  const abrirConteudoDestaque = () => {
+    if (!conteudoDestaque) {
+      router.push("/conteudos");
+      return;
+    }
+
+    router.push({
+      pathname: "/conteudoDetalhe/[id]",
+      params: {
+        id: conteudoDestaque.id,
+        titulo: conteudoDestaque.titulo,
+        resumo: conteudoDestaque.resumo,
+        conteudoCompleto: conteudoDestaque.conteudoCompleto,
+        tag: conteudoDestaque.tag,
+      },
+    });
+  };
 
   return (
     <ScrollView
@@ -27,7 +186,6 @@ export default function HomeScreen() {
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
-      {/* --- HEADER --- */}
       <Surface
         style={[
           styles.headerContainer,
@@ -73,7 +231,7 @@ export default function HomeScreen() {
                   },
                 ]}
               >
-                Maria Silva
+                {usuario?.nome}
               </Text>
             </View>
           </View>
@@ -87,11 +245,12 @@ export default function HomeScreen() {
         </View>
 
         <Text style={styles.headerDescription}>
-          Acompanhe seu ciclo, hábitos e bem-estar diário.
+          {tipoAtual === enumTipoUsuario.NaoDefinido
+            ? "Acompanhe sua saúde, hábitos e bem-estar diário."
+            : `Acompanhe conteúdos e cuidados pensados para o perfil ${tipoAtual}.`}
         </Text>
       </Surface>
 
-      {/* --- RESUMO --- */}
       <View style={styles.summaryContainer}>
         <View style={styles.summaryItem}>
           <Text style={styles.summaryNumber}>
@@ -128,11 +287,10 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* --- CARD PRINCIPAL CICLO --- */}
       <Card
         style={styles.mainCard}
         elevation={1}
-        onPress={() => router.push("/ciclo")}
+        onPress={abrirConteudoDestaque}
       >
         <Card.Content>
           <View style={styles.cardHeader}>
@@ -158,11 +316,11 @@ export default function HomeScreen() {
                 variant="titleLarge"
                 style={styles.cardTitle}
               >
-                Ciclo Menstrual
+                {homeCardConfig.titulo}
               </Text>
 
               <Text style={styles.cardSubtitle}>
-                Atualizado hoje
+                {conteudoDestaque?.titulo ?? homeCardConfig.subtitulo}
               </Text>
             </View>
           </View>
@@ -171,14 +329,11 @@ export default function HomeScreen() {
             variant="bodyMedium"
             style={styles.cardDescription}
           >
-            Você está na fase folicular. Seu corpo
-            tende a apresentar mais energia e
-            disposição física neste período.
+            {conteudoDestaque?.resumo ?? homeCardConfig.descricaoVazia}
           </Text>
         </Card.Content>
       </Card>
 
-      {/* --- CALENDÁRIO CICLO --- */}
       <Card
         style={styles.calendarCard}
         elevation={1}
@@ -234,7 +389,6 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* MINI CALENDÁRIO */}
           <View style={styles.miniCalendar}>
             {["S", "T", "Q", "Q", "S", "S", "D"].map(
               (dia, index) => (
@@ -254,14 +408,14 @@ export default function HomeScreen() {
                   style={[
                     styles.dayCircle,
                     dia === 12 &&
-                      styles.activeDayCircle,
+                    styles.activeDayCircle,
                   ]}
                 >
                   <Text
                     style={[
                       styles.dayText,
                       dia === 12 &&
-                        styles.activeDayText,
+                      styles.activeDayText,
                     ]}
                   >
                     {dia}
@@ -273,7 +427,6 @@ export default function HomeScreen() {
         </Card.Content>
       </Card>
 
-      {/* --- DICA DO DIA --- */}
       <Card style={styles.tipCard} elevation={0}>
         <Card.Content>
           <View style={styles.tipHeader}>
@@ -285,7 +438,7 @@ export default function HomeScreen() {
             />
 
             <Text style={styles.tipTitle}>
-              Dica do dia
+              {dicaDoDia?.titulo ?? "Dica do dia"}
             </Text>
           </View>
 
@@ -293,19 +446,17 @@ export default function HomeScreen() {
             variant="bodyMedium"
             style={styles.tipText}
           >
-            Dormir bem ajuda no equilíbrio hormonal
-            e melhora o bem-estar emocional.
+            {dicaDoDia?.texto ??
+              "Em breve, você verá dicas rápidas e personalizadas para o seu perfil aqui."}
           </Text>
         </Card.Content>
       </Card>
 
-      {/* --- ACESSOS RÁPIDOS --- */}
       <Text style={styles.sectionTitle}>
         Acessos rápidos
       </Text>
 
       <View style={styles.quickAccessContainer}>
-        {/* CONTEÚDOS */}
         <Card
           style={styles.smallCard}
           elevation={0}
@@ -343,7 +494,6 @@ export default function HomeScreen() {
           </Card.Content>
         </Card>
 
-        {/* AÇÕES */}
         <Card
           style={styles.smallCard}
           elevation={0}
@@ -395,8 +545,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-  /* HEADER */
-
   headerContainer: {
     marginHorizontal: 20,
     borderRadius: 32,
@@ -444,8 +592,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  /* RESUMO */
-
   summaryContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -487,8 +633,6 @@ const styles = StyleSheet.create({
     height: 32,
     backgroundColor: "#EEE",
   },
-
-  /* CARD PRINCIPAL */
 
   mainCard: {
     marginHorizontal: 24,
@@ -542,8 +686,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: "#666",
   },
-
-  /* CALENDÁRIO */
 
   calendarCard: {
     marginHorizontal: 24,
@@ -642,8 +784,6 @@ const styles = StyleSheet.create({
     color: "#FFF",
   },
 
-  /* DICA */
-
   tipCard: {
     marginHorizontal: 24,
     marginBottom: 24,
@@ -677,8 +817,6 @@ const styles = StyleSheet.create({
     color: "#666",
     lineHeight: 21,
   },
-
-  /* ACESSOS */
 
   sectionTitle: {
     marginHorizontal: 24,
