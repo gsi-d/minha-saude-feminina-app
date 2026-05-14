@@ -1,16 +1,14 @@
-import { enumTipoUsuario } from "@/constants/enums";
-import { createConteudosRepositoryFromEnv } from "@/data/conteudos/conteudos.repository";
-import type { Conteudo } from "@/domain/conteudos/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { createConteudosRepository } from "@/data/conteudos/conteudos.repository";
+import type { Conteudo } from "@/domain/conteudos/types";
+import { resolveTipoUsuario } from "@/utils/resolveTipoUsuario";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Card, Text } from "react-native-paper";
 
-const conteudosRepository = createConteudosRepositoryFromEnv(
-  process.env as Record<string, string | undefined>,
-);
+const conteudosRepository = createConteudosRepository();
 
 const CORES_LAYOUT = {
   headerBackground: "#9B51E0",
@@ -32,18 +30,7 @@ export default function ConteudosScreen() {
   const { usuario } = useAuth();
   const [conteudosDaUsuaria, setConteudosDaUsuaria] = useState<Conteudo[]>([]);
   const [filtroAtivo, setFiltroAtivo] = useState("");
-
-  const tipoBruto = usuario?.tipoUsuario as string | undefined;
-
-  const tipoAtual = useMemo(() => {
-    if (!tipoBruto) return enumTipoUsuario.NaoDefinido;
-
-    const tipoEncontrado = Object.values(enumTipoUsuario).find(
-      (val) => val.toLowerCase() === tipoBruto.toLowerCase(),
-    );
-
-    return (tipoEncontrado as enumTipoUsuario) || enumTipoUsuario.NaoDefinido;
-  }, [tipoBruto]);
+  const tipoAtual = resolveTipoUsuario(usuario?.tipoUsuario);
 
   useEffect(() => {
     let ativo = true;
@@ -210,7 +197,7 @@ export default function ConteudosScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFF" },
+  container: { flex: 1, backgroundColor: "#fff6f8" },
   appHeaderTitle: {
     textAlign: "center",
     paddingTop: 40,
@@ -246,6 +233,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#F0F0F0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   cardTitle: { fontWeight: "bold", marginBottom: 8, color: "#000" },
   cardExcerpt: { color: "#666", marginBottom: 16, lineHeight: 20 },
