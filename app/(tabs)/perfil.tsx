@@ -23,8 +23,8 @@ export default function PerfilScreen() {
     ? usuario.nome.substring(0, 2).toUpperCase()
     : "US";
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.replace("/login");
   };
 

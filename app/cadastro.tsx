@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, StyleSheet, View, ScrollView } from 'react-native';
 import { Button, Text, TextInput, useTheme } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
+import { getCadastroValidationError } from "../utils/cadastroValidation";
 
 export default function CadastroScreen() {
   const { iniciarCadastro } = useAuth();
@@ -16,10 +17,17 @@ export default function CadastroScreen() {
 
   const theme = useTheme();
   const router = useRouter();
+  const validationError = getCadastroValidationError({
+    nome,
+    email,
+    senha,
+    telefone,
+    dataNascimento,
+  });
 
   const handleRegister = () => {
-    if (!nome || !email || !senha || !telefone || !dataNascimento) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos.');
+    if (validationError) {
+      Alert.alert('Erro', validationError);
       return;
     }
 
@@ -81,6 +89,7 @@ export default function CadastroScreen() {
             secureTextEntry={!showPassword}
             value={senha}
             onChangeText={setSenha}
+            error={senha.length > 0 && senha.trim().length < 6}
             left={<TextInput.Icon icon="lock-outline" />}
             right={
               <TextInput.Icon
@@ -90,6 +99,11 @@ export default function CadastroScreen() {
             }
             style={styles.input}
           />
+          {senha.length > 0 && senha.trim().length < 6 ? (
+            <Text style={styles.helperText}>
+              A senha deve ter pelo menos 6 caracteres.
+            </Text>
+          ) : null}
 
           <TextInput
             label="Telefone"
@@ -116,7 +130,7 @@ export default function CadastroScreen() {
             mode="contained"
             onPress={handleRegister}
             loading={loading}
-            disabled={loading || !nome || !email || !senha || !telefone || !dataNascimento}
+            disabled={loading || validationError !== null}
             style={styles.button}
             contentStyle={styles.buttonContent}
           >
@@ -162,6 +176,11 @@ const styles = StyleSheet.create({
   input: {
     marginBottom: 16,
     borderRadius: 20,
+  },
+  helperText: {
+    marginTop: -8,
+    marginBottom: 12,
+    color: "#B3261E",
   },
   button: {
     marginTop: 8,

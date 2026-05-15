@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Button, Text, TextInput, useTheme } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
+import { getFriendlySupabaseAuthErrorMessage } from "../utils/supabaseAuthErrors";
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -36,7 +37,7 @@ export default function LoginScreen() {
     } catch (error) {
       console.error(error);
       setLoading(false);
-      Alert.alert("Erro", "Falha ao consultar login.");
+      Alert.alert("Erro", getFriendlySupabaseAuthErrorMessage(error));
     }
   };
 

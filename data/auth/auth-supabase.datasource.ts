@@ -6,6 +6,11 @@ import {
   type SupabaseUsuarioRow,
 } from './auth-supabase.mapper';
 import type { AuthRepository } from './auth.types';
+import {
+  getFriendlySupabaseAuthErrorMessage,
+  isAuthSessionMissingError,
+  isInvalidLoginCredentialsError,
+} from '../../utils/supabaseAuthErrors';
 
 // CORREÇÃO AQUI: O mapeamento precisa bater com as strings do seu Enum
 function mapearPerfilParaEnum(perfil: PerfilCadastro): enumTipoUsuario {
@@ -23,6 +28,51 @@ function mapearPerfilParaEnum(perfil: PerfilCadastro): enumTipoUsuario {
 }
 
 export class SupabaseAuthDataSource implements AuthRepository {
+  async getCurrentUsuario(): Promise<Usuario | null> {
+    const client = getSupabaseClient(process.env as Record<string, string | undefined>);
+    const {
+      data: { session },
+      error: sessionError,
+    } = await client.auth.getSession();
+
+    if (sessionError) {
+      if (isAuthSessionMissingError(sessionError)) {
+        return null;
+      }
+      throw sessionError;
+    }
+    if (!session?.user) return null;
+
+    const {
+      data: { user },
+      error: authError,
+    } = await client.auth.getUser();
+
+    if (authError) {
+      if (isAuthSessionMissingError(authError)) {
+        return null;
+      }
+      throw authError;
+    }
+    if (!user) return null;
+
+    const { data, error } = await client
+      .from('TB_USUARIO')
+      .select('*')
+      .eq('ID_AUTH', user.id)
+      .single();
+
+    if (error) throw error;
+    return data ? mapSupabaseUsuarioRowToDomain(data as SupabaseUsuarioRow) : null;
+  }
+
+  async logout(): Promise<void> {
+    const client = getSupabaseClient(process.env as Record<string, string | undefined>);
+    const { error } = await client.auth.signOut();
+
+    if (error) throw error;
+  }
+
   
   async login(input: LoginInput): Promise<Usuario | null> {
     const client = getSupabaseClient(process.env as Record<string, string | undefined>);
@@ -32,7 +82,13 @@ export class SupabaseAuthDataSource implements AuthRepository {
       password: input.senha.trim(),
     });
 
-    if (authError) throw authError;
+    if (authError) {
+      if (isInvalidLoginCredentialsError(authError)) {
+        return null;
+      }
+
+      throw authError;
+    }
     if (!authData.user) return null;
 
     const { data, error } = await client
@@ -54,7 +110,9 @@ export class SupabaseAuthDataSource implements AuthRepository {
       password: senha.trim(),
     });
 
-    if (authError) throw authError;
+    if (authError) {
+      throw new Error(getFriendlySupabaseAuthErrorMessage(authError));
+    }
     if (!authData.user) return null;
 
     // Obtém a string do Enum (ex: 'Gestante' ou 'Menopausa')
