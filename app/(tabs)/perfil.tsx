@@ -1,4 +1,3 @@
-import { useRouter } from "expo-router";
 import { ScrollView, StyleSheet, View } from "react-native";
 import {
   Avatar,
@@ -15,7 +14,6 @@ import { useAuth } from "../../contexts/AuthContext";
 
 export default function PerfilScreen() {
   const theme = useTheme();
-  const router = useRouter();
 
   const { usuario, logout } = useAuth();
 
@@ -25,7 +23,6 @@ export default function PerfilScreen() {
 
   const handleLogout = async () => {
     await logout();
-    router.replace("/login");
   };
 
   return (

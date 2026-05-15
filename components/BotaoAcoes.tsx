@@ -113,8 +113,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  /* MENU */
-
   menuContainer: {
     position: "absolute",
     width: 180,
@@ -161,12 +159,6 @@ const styles = StyleSheet.create({
     color: "#333",
     textAlign: 'left',
   },
-
-  /* POSIÇÕES */
-
-
-
-  /* FAB */
 
   customButtonContainer: {
     top: -14,
