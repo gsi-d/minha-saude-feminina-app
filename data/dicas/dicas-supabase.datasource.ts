@@ -1,6 +1,5 @@
 import { enumTipoUsuario } from '../../constants/enums';
 import { getSupabaseClient } from '../../services/supabase/client';
-import { mapTipoUsuarioEnumToDb } from '../../utils/mapTipoUsuarioDb';
 import {
   mapSupabaseDicaRowToDomain,
   type SupabaseDicaRow,
@@ -10,20 +9,27 @@ import type { Dica } from './dicas.types';
 export class SupabaseDicasDataSource {
   async listByTipoUsuarioAndTags(tipoUsuario: enumTipoUsuario, tags: string[]): Promise<Dica[]> {
     const client = getSupabaseClient(process.env as Record<string, string | undefined>);
-    
-    // Converte o enum do App para o número que o Banco entende
-    const tipoUsuarioDb = mapTipoUsuarioEnumToDb(tipoUsuario);
 
-    // Chama a função RPC que criamos no banco de dados
-    const { data, error } = await client.rpc('fn_listar_dicas_por_tipo_usuario', {
-      p_tp_usuario: tipoUsuarioDb,
-      p_tags: tags,
-    });
+    const { data, error } = await client
+      .from('TB_DICA')
+      .select('ID, TITULO, TEXTO, TAG, TP_USUARIO, CREATED_AT')
+      .order('CREATED_AT', { ascending: false });
 
     if (error) {
       throw error;
     }
 
-    return ((data ?? []) as SupabaseDicaRow[]).map(mapSupabaseDicaRowToDomain);
+    const tagsNormalizadas = tags.map((tag) => tag.trim().toLowerCase()).filter(Boolean);
+
+    return ((data ?? []) as SupabaseDicaRow[])
+      .map(mapSupabaseDicaRowToDomain)
+      .filter((dica) => dica.tipo === tipoUsuario)
+      .filter((dica) => {
+        if (tagsNormalizadas.length === 0) {
+          return true;
+        }
+
+        return tagsNormalizadas.includes(dica.tag.trim().toLowerCase());
+      });
   }
 }

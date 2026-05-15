@@ -15,6 +15,11 @@ test('mapSupabaseTipoUsuarioToEnum converte codigos do banco para enum local', (
   assert.equal(mapSupabaseTipoUsuarioToEnum(4), enumTipoUsuario.Menopausa);
   assert.equal(mapSupabaseTipoUsuarioToEnum(5), enumTipoUsuario.NaoDefinido);
   assert.equal(mapSupabaseTipoUsuarioToEnum(null), enumTipoUsuario.NaoDefinido);
+  assert.equal(mapSupabaseTipoUsuarioToEnum('Adolescente'), enumTipoUsuario.Adolescente);
+  assert.equal(mapSupabaseTipoUsuarioToEnum('Gestante'), enumTipoUsuario.Gestante);
+  assert.equal(mapSupabaseTipoUsuarioToEnum('Tentante'), enumTipoUsuario.Tentante);
+  assert.equal(mapSupabaseTipoUsuarioToEnum('Menopausa'), enumTipoUsuario.Menopausa);
+  assert.equal(mapSupabaseTipoUsuarioToEnum('Não Definido'), enumTipoUsuario.NaoDefinido);
 });
 
 test('mapSupabaseUsuarioRowToDomain converte nomes de colunas do Supabase para tipagem local', () => {
@@ -41,11 +46,33 @@ test('mapSupabaseUsuarioRowToDomain converte nomes de colunas do Supabase para t
     id: 'user-id',
     nome: 'Maria',
     email: 'maria@teste.com',
-    senha: '123456',
     dataNascimento: '1995-05-20',
     tipoUsuario: enumTipoUsuario.Gestante,
     administrador: true,
     dataCadastro: '2026-05-13T10:00:00',
     telefone: '',
   });
+});
+
+test('mapSupabaseUsuarioRowToDomain converte TP_USUARIO textual do novo schema', () => {
+  const row: SupabaseUsuarioRow = {
+    ID: 'user-id',
+    ID_AUTH: 'auth-id',
+    NM_USUARIO: 'Ana',
+    DS_EMAIL: 'ana@teste.com',
+    DT_NASCIMENTO: '2000-01-01',
+    URL_FOTO: null,
+    FL_ATIVO: true,
+    DT_CRIACAO: '2026-05-15T10:00:00',
+    DT_ATUALIZACAO: '2026-05-15T10:00:00',
+    DS_SENHA: null,
+    IS_ADM: false,
+    tipo_usuario: null,
+    TP_USUARIO: 'Gestante',
+    FL_IS_ADM: null,
+  };
+
+  const usuario = mapSupabaseUsuarioRowToDomain(row);
+
+  assert.equal(usuario.tipoUsuario, enumTipoUsuario.Gestante);
 });

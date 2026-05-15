@@ -14,8 +14,8 @@ export interface SupabaseUsuarioRow {
   DT_ATUALIZACAO: string;
   DS_SENHA: string | null;
   IS_ADM: boolean | null;
-  tipo_usuario: number | null;
-  TP_USUARIO: number | null;
+  tipo_usuario: string | number | null;
+  TP_USUARIO: string | number | null;
   FL_IS_ADM: boolean | null;
 }
 
@@ -26,7 +26,6 @@ export function mapSupabaseUsuarioRowToDomain(row: SupabaseUsuarioRow): Usuario 
     id: row.ID,
     nome: row.NM_USUARIO,
     email: row.DS_EMAIL,
-    senha: row.DS_SENHA ?? undefined,
     dataNascimento: row.DT_NASCIMENTO ?? '',
     tipoUsuario: mapSupabaseTipoUsuarioToEnum(row.TP_USUARIO ?? row.tipo_usuario),
     administrador: row.FL_IS_ADM ?? row.IS_ADM ?? false,
