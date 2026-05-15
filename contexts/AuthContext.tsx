@@ -5,6 +5,7 @@ import type { CadastroBasico, PerfilCadastro, Usuario } from '../domain/auth/typ
 
 interface AuthContextData {
   usuario: Usuario | null;
+  authReady: boolean;
   cadastroPendente: CadastroBasico | null;
   login: (email: string, senha: string) => Promise<boolean>;
   iniciarCadastro: (dados: CadastroBasico) => void;
@@ -18,6 +19,7 @@ const authRepository = createAuthRepository();
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [cadastroPendente, setCadastroPendente] = useState<CadastroBasico | null>(null);
 
   useEffect(() => {
@@ -28,9 +30,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const usuarioAtual = await authRepository.getCurrentUsuario();
         if (ativo) {
           setUsuario(usuarioAtual);
+          setAuthReady(true);
         }
       } catch (error) {
         console.error(error);
+        if (ativo) {
+          setAuthReady(true);
+        }
       }
     };
 
@@ -82,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ usuario, cadastroPendente, login, iniciarCadastro, finalizarCadastro, logout }}
+      value={{ usuario, authReady, cadastroPendente, login, iniciarCadastro, finalizarCadastro, logout }}
     >
       {children}
     </AuthContext.Provider>
