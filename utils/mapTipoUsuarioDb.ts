@@ -1,6 +1,38 @@
 import { enumTipoUsuario } from '../constants/enums';
 
-export function mapTipoUsuarioDbToEnum(tipoUsuario?: number | null): enumTipoUsuario {
+function normalizeTipoUsuarioLabel(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\s_-]+/g, '');
+}
+
+export function mapTipoUsuarioDbToEnum(
+  tipoUsuario?: number | string | null,
+): enumTipoUsuario {
+  if (typeof tipoUsuario === 'string') {
+    switch (normalizeTipoUsuarioLabel(tipoUsuario)) {
+      case 'adolescente':
+        return enumTipoUsuario.Adolescente;
+      case 'gestante':
+      case 'gravida':
+        return enumTipoUsuario.Gestante;
+      case 'tentante':
+        return enumTipoUsuario.Tentante;
+      case 'menopausa':
+        return enumTipoUsuario.Menopausa;
+      case 'naodefinido':
+      case '':
+        return enumTipoUsuario.NaoDefinido;
+      case 'administrador':
+        return enumTipoUsuario.Administrador;
+      default:
+        return enumTipoUsuario.NaoDefinido;
+    }
+  }
+
   switch (tipoUsuario) {
     case 1:
       return enumTipoUsuario.Adolescente;

@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 import { createAuthRepository } from '../data/auth/auth.repository';
 import type { CadastroBasico, PerfilCadastro, Usuario } from '../domain/auth/types';
@@ -9,21 +9,37 @@ interface AuthContextData {
   login: (email: string, senha: string) => Promise<boolean>;
   iniciarCadastro: (dados: CadastroBasico) => void;
   finalizarCadastro: (perfil: PerfilCadastro) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 const authRepository = createAuthRepository();
 
-function sanitizeUsuario(usuario: Usuario): Usuario {
-  const { senha: _senha, ...userData } = usuario;
-  return userData;
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [cadastroPendente, setCadastroPendente] = useState<CadastroBasico | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+
+    const restoreSession = async () => {
+      try {
+        const usuarioAtual = await authRepository.getCurrentUsuario();
+        if (ativo) {
+          setUsuario(usuarioAtual);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    void restoreSession();
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   const login = async (email: string, senha: string) => {
     const usuarioEncontrado = await authRepository.login({ email, senha });
@@ -32,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
-    setUsuario(sanitizeUsuario(usuarioEncontrado));
+    setUsuario(usuarioEncontrado);
     return true;
   };
 
@@ -54,12 +70,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
-    setUsuario(sanitizeUsuario(novoUsuario));
+    setUsuario(novoUsuario);
     setCadastroPendente(null);
     return true;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await authRepository.logout();
     setUsuario(null);
   };
 

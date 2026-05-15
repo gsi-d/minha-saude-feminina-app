@@ -1,6 +1,8 @@
 import { enumTipoUsuario } from "../constants/enums";
 
-export function resolveTipoUsuario(tipo: enumTipoUsuario | string | number): string {
+export function resolveTipoUsuario(
+  tipo: enumTipoUsuario | string | number | undefined | null,
+): string {
   // Garantimos que o 'tipo' seja comparado corretamente
   switch (tipo) {
     case enumTipoUsuario.Adolescente:

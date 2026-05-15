@@ -3,4 +3,6 @@ import type { FinalizarCadastroInput, LoginInput, Usuario } from '../../domain/a
 export interface AuthRepository {
   login(input: LoginInput): Promise<Usuario | null>;
   finalizarCadastro(input: FinalizarCadastroInput): Promise<Usuario | null>;
+  getCurrentUsuario(): Promise<Usuario | null>;
+  logout(): Promise<void>;
 }

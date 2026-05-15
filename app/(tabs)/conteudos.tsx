@@ -1,3 +1,4 @@
+import { enumTipoUsuario } from "@/constants/enums";
 import { useAuth } from "@/contexts/AuthContext";
 import { createConteudosRepository } from "@/data/conteudos/conteudos.repository";
 import type { Conteudo } from "@/domain/conteudos/types";
@@ -30,13 +31,17 @@ export default function ConteudosScreen() {
   const { usuario } = useAuth();
   const [conteudosDaUsuaria, setConteudosDaUsuaria] = useState<Conteudo[]>([]);
   const [filtroAtivo, setFiltroAtivo] = useState("");
-  const tipoAtual = resolveTipoUsuario(usuario?.tipoUsuario);
+  const tipoUsuarioAtual =
+    (usuario?.tipoUsuario as enumTipoUsuario | undefined) ??
+    enumTipoUsuario.NaoDefinido;
+  const tipoAtual = resolveTipoUsuario(tipoUsuarioAtual);
 
   useEffect(() => {
     let ativo = true;
 
     const loadConteudos = async () => {
-      const conteudos = await conteudosRepository.listByTipoUsuario(tipoAtual);
+      const conteudos =
+        await conteudosRepository.listByTipoUsuario(tipoUsuarioAtual);
       if (ativo) {
         setConteudosDaUsuaria(conteudos);
       }
@@ -47,7 +52,7 @@ export default function ConteudosScreen() {
     return () => {
       ativo = false;
     };
-  }, [tipoAtual]);
+  }, [tipoUsuarioAtual]);
 
   const tagsDisponiveis = useMemo(() => {
     const tags = conteudosDaUsuaria.map((item) => item.tag);

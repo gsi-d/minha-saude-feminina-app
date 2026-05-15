@@ -71,14 +71,25 @@ export default function CadastroGestandeScreen() {
     }
 
     setLoading(true);
+    let sucesso = false;
+    let handledError = false;
 
-    const sucesso = await finalizarCadastro(selectedProfile);
-
-    setLoading(false);
+    try {
+      sucesso = await finalizarCadastro(selectedProfile);
+    } catch (error) {
+      handledError = true;
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Não foi possível concluir o cadastro.";
+      Alert.alert("Erro", message);
+    } finally {
+      setLoading(false);
+    }
 
     if (sucesso) {
       router.replace("/(tabs)");
-    } else {
+    } else if (!handledError) {
       Alert.alert("Erro", "Não foi possível concluir o cadastro.");
     }
   };
