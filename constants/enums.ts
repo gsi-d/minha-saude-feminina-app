@@ -3,5 +3,6 @@ export enum enumTipoUsuario {
   Gestante = 'Gestante',
   Tentante = 'Tentante',
   Menopausa = 'Menopausa',
-  NaoDefinido = 'NaoDefinido'
+  NaoDefinido = 'NaoDefinido',
+  Administrador = 'Administrador'
 }

@@ -4,7 +4,6 @@ import { createConteudosRepository } from "@/data/conteudos/conteudos.repository
 import { createDicasRepository } from "@/data/dicas/dicas.repository";
 import { Dica } from "@/data/dicas/dicas.types";
 import type { Conteudo } from "@/domain/conteudos/types";
-import { resolveTipoUsuario } from "@/utils/resolveTipoUsuario";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
@@ -21,61 +20,61 @@ import {
 const conteudosRepository = createConteudosRepository();
 const dicasRepository = createDicasRepository();
 
-const HOME_CARD_CONFIG: Record<
-  enumTipoUsuario,
-  {
-    titulo: string;
-    subtitulo: string;
-    tagPrincipal: string;
-    tagsFallback: string[];
-    tagsDicas: string[];
-    descricaoVazia: string;
-  }
-> = {
+const HOME_CARD_CONFIG: Record<enumTipoUsuario, {
+  titulo: string;
+  subtitulo: string;
+  tagPrincipal: string;
+  tagsFallback: string[];
+  tagsDicas: string[];
+  descricaoVazia: string;
+}> = {
   [enumTipoUsuario.Adolescente]: {
     titulo: "Ciclo Menstrual",
-    subtitulo: "Conteúdo recomendado para adolescentes",
+    subtitulo: "Dicas para sua fase de desenvolvimento",
     tagPrincipal: "menstruação",
     tagsFallback: ["bem-estar", "saúde"],
     tagsDicas: ["menstruação", "bem-estar", "contracepção"],
-    descricaoVazia:
-      "Conteúdos sobre ciclo, fluxo e mudanças hormonais vão aparecer aqui para o seu perfil.",
+    descricaoVazia: "Conteúdos sobre ciclo e fluxo aparecerão aqui.",
   },
   [enumTipoUsuario.Gestante]: {
     titulo: "Gestação",
-    subtitulo: "Conteúdo recomendado para sua fase atual",
+    subtitulo: "Acompanhando sua jornada",
     tagPrincipal: "saúde",
     tagsFallback: ["bem-estar"],
     tagsDicas: ["saúde", "bem-estar"],
-    descricaoVazia:
-      "Informações sobre pré-natal, sintomas e bem-estar na gravidez vão aparecer aqui para o seu perfil.",
+    descricaoVazia: "Informações sobre pré-natal aparecerão aqui.",
   },
   [enumTipoUsuario.Tentante]: {
-    titulo: "Janela Fértil",
-    subtitulo: "Conteúdo recomendado para tentantes",
+    titulo: "Planejamento",
+    subtitulo: "Conteúdo para sua janela fértil",
     tagPrincipal: "menstruação",
     tagsFallback: ["saúde", "bem-estar"],
     tagsDicas: ["menstruação", "saúde", "bem-estar"],
-    descricaoVazia:
-      "Conteúdos sobre ovulação, fertilidade e acompanhamento do ciclo vão aparecer aqui para o seu perfil.",
+    descricaoVazia: "Dicas de fertilidade aparecerão aqui.",
   },
   [enumTipoUsuario.Menopausa]: {
-    titulo: "Menopausa",
-    subtitulo: "Conteúdo recomendado para sua fase atual",
+    titulo: "Climatério",
+    subtitulo: "Bem-estar nesta nova fase",
     tagPrincipal: "saúde",
     tagsFallback: ["bem-estar"],
     tagsDicas: ["saúde", "bem-estar"],
-    descricaoVazia:
-      "Conteúdos sobre climatério, sintomas e qualidade de vida vão aparecer aqui para o seu perfil.",
+    descricaoVazia: "Conteúdos sobre menopausa aparecerão aqui.",
   },
   [enumTipoUsuario.NaoDefinido]: {
     titulo: "Saúde Feminina",
-    subtitulo: "Conteúdo recomendado para você",
-    tagPrincipal: "menstruação",
-    tagsFallback: ["saúde", "bem-estar"],
-    tagsDicas: ["menstruação", "saúde", "bem-estar"],
-    descricaoVazia:
-      "Defina seu perfil para receber recomendações mais específicas na Home.",
+    subtitulo: "Dicas gerais para o seu dia",
+    tagPrincipal: "saúde",
+    tagsFallback: ["bem-estar"],
+    tagsDicas: ["saúde", "bem-estar"],
+    descricaoVazia: "Configure seu perfil para dicas personalizadas.",
+  },
+  [enumTipoUsuario.Administrador]: {
+    titulo: "Painel Admin",
+    subtitulo: "Gestão do sistema",
+    tagPrincipal: "geral",
+    tagsFallback: ["saúde"],
+    tagsDicas: ["saúde", "bem-estar"],
+    descricaoVazia: "Nenhum dado pendente.",
   },
 };
 
@@ -113,14 +112,11 @@ export default function HomeScreen() {
   const [conteudoDestaque, setConteudoDestaque] = useState<Conteudo | null>(null);
   const [dicaDoDia, setDicaDoDia] = useState<Dica | null>(null);
 
-  const tipoAtual = useMemo(
-    () => resolveTipoUsuario(usuario?.tipoUsuario),
-    [usuario?.tipoUsuario],
-  );
-  const homeCardConfig = HOME_CARD_CONFIG[tipoAtual];
+const tipoUsuarioAtual = (usuario?.tipoUsuario as enumTipoUsuario) || enumTipoUsuario.NaoDefinido;
+const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
   const tagsDicas = useMemo(
-    () => homeCardConfig.tagsDicas,
-    [homeCardConfig.tagsDicas],
+    () => config.tagsDicas,
+    [config.tagsDicas],
   );
 
   useEffect(() => {
@@ -128,9 +124,9 @@ export default function HomeScreen() {
 
     const loadHomeData = async () => {
       const [conteudos, dicasPerfil, dicasFallback] = await Promise.all([
-        conteudosRepository.listByTipoUsuario(tipoAtual),
+        conteudosRepository.listByTipoUsuario(tipoUsuarioAtual),
         dicasRepository.listByTipoUsuarioAndTags(
-          tipoAtual,
+          tipoUsuarioAtual,
           tagsDicas,
         ),
         dicasRepository.listByTipoUsuarioAndTags(
@@ -143,7 +139,7 @@ export default function HomeScreen() {
         return;
       }
 
-      setConteudoDestaque(selecionarConteudoDestaque(conteudos, tipoAtual));
+      setConteudoDestaque(selecionarConteudoDestaque(conteudos, tipoUsuarioAtual));
       setDicaDoDia(
         selecionarDicaAleatoria(dicasPerfil) ??
           selecionarDicaAleatoria(dicasFallback)
@@ -155,7 +151,7 @@ export default function HomeScreen() {
     return () => {
       ativo = false;
     };
-  }, [tagsDicas, tipoAtual]);
+  }, [tagsDicas, tipoUsuarioAtual]);
 
   const abrirConteudoDestaque = () => {
     if (!conteudoDestaque) {
@@ -245,9 +241,9 @@ export default function HomeScreen() {
         </View>
 
         <Text style={styles.headerDescription}>
-          {tipoAtual === enumTipoUsuario.NaoDefinido
+          {tipoUsuarioAtual === enumTipoUsuario.NaoDefinido
             ? "Acompanhe sua saúde, hábitos e bem-estar diário."
-            : `Acompanhe conteúdos e cuidados pensados para o perfil ${tipoAtual}.`}
+            : `Acompanhe conteúdos e cuidados pensados para o perfil ${tipoUsuarioAtual}.`}
         </Text>
       </Surface>
 
@@ -316,11 +312,11 @@ export default function HomeScreen() {
                 variant="titleLarge"
                 style={styles.cardTitle}
               >
-                {homeCardConfig.titulo}
+                {config.titulo}
               </Text>
 
               <Text style={styles.cardSubtitle}>
-                {conteudoDestaque?.titulo ?? homeCardConfig.subtitulo}
+                {conteudoDestaque?.titulo ?? config.subtitulo}
               </Text>
             </View>
           </View>
@@ -329,7 +325,7 @@ export default function HomeScreen() {
             variant="bodyMedium"
             style={styles.cardDescription}
           >
-            {conteudoDestaque?.resumo ?? homeCardConfig.descricaoVazia}
+            {conteudoDestaque?.resumo ?? config.descricaoVazia}
           </Text>
         </Card.Content>
       </Card>
