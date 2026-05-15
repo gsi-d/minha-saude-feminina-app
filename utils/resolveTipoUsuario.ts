@@ -1,13 +1,21 @@
-import { enumTipoUsuario } from '../constants/enums';
+import { enumTipoUsuario } from "../constants/enums";
 
-export function resolveTipoUsuario(tipoUsuario?: string | null): enumTipoUsuario {
-  if (!tipoUsuario) {
-    return enumTipoUsuario.NaoDefinido;
+export function resolveTipoUsuario(tipo: enumTipoUsuario | string | number): string {
+  // Garantimos que o 'tipo' seja comparado corretamente
+  switch (tipo) {
+    case enumTipoUsuario.Adolescente:
+    case 1:
+      return "Adolescente";
+    case enumTipoUsuario.Gestante:
+    case 2:
+      return "Gestante";
+    case enumTipoUsuario.Tentante:
+    case 3:
+      return "Tentante";
+    case enumTipoUsuario.Menopausa:
+    case 4:
+      return "Menopausa";
+    default:
+      return "Não Definido";
   }
-
-  const tipoEncontrado = Object.values(enumTipoUsuario).find(
-    (valor) => valor.toLowerCase() === tipoUsuario.toLowerCase()
-  );
-
-  return tipoEncontrado ?? enumTipoUsuario.NaoDefinido;
 }
