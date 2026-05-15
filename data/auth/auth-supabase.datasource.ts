@@ -12,22 +12,148 @@ import {
   isInvalidLoginCredentialsError,
 } from '../../utils/supabaseAuthErrors';
 
-// CORREÇÃO AQUI: O mapeamento precisa bater com as strings do seu Enum
 function mapearPerfilParaEnum(perfil: PerfilCadastro): enumTipoUsuario {
   const depara: Record<string, enumTipoUsuario> = {
     'adolescente': enumTipoUsuario.Adolescente,
-    'gravida':      enumTipoUsuario.Gestante,
-    'gestante':     enumTipoUsuario.Gestante, // Adicionado por segurança
-    'tentante':     enumTipoUsuario.Tentante,
-    'menopausa':    enumTipoUsuario.Menopausa,
+    'gravida': enumTipoUsuario.Gestante,
+    'gestante': enumTipoUsuario.Gestante,
+    'tentante': enumTipoUsuario.Tentante,
+    'menopausa': enumTipoUsuario.Menopausa,
   };
-  
-  // Converte para minúsculo para evitar erro de digitação (ex: 'Gravida' vs 'gravida')
+
   const chave = perfil.toLowerCase();
   return depara[chave] || enumTipoUsuario.NaoDefinido;
 }
 
+function normalizarEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+function obterNomeFallback(email: string) {
+  const [nomeAntesDoArroba] = normalizarEmail(email).split('@');
+  return nomeAntesDoArroba || 'Usuaria';
+}
+
 export class SupabaseAuthDataSource implements AuthRepository {
+  private async buscarUsuarioPorAuthId(
+    client: ReturnType<typeof getSupabaseClient>,
+    authId: string,
+  ): Promise<SupabaseUsuarioRow | null> {
+    const { data, error } = await client
+      .from('TB_USUARIO')
+      .select('*')
+      .eq('ID_AUTH', authId)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    return (data as SupabaseUsuarioRow | null) ?? null;
+  }
+
+  private async buscarUsuarioPorEmail(
+    client: ReturnType<typeof getSupabaseClient>,
+    email: string,
+  ): Promise<SupabaseUsuarioRow | null> {
+    const { data, error } = await client
+      .from('TB_USUARIO')
+      .select('*')
+      .eq('DS_EMAIL', normalizarEmail(email))
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    return (data as SupabaseUsuarioRow | null) ?? null;
+  }
+
+  private async vincularAuthAoUsuarioExistente(
+    client: ReturnType<typeof getSupabaseClient>,
+    usuario: SupabaseUsuarioRow,
+    authId: string,
+  ): Promise<SupabaseUsuarioRow> {
+    if (usuario.ID_AUTH === authId) {
+      return usuario;
+    }
+
+    const { data, error } = await client
+      .from('TB_USUARIO')
+      .update({ ID_AUTH: authId })
+      .eq('ID', usuario.ID)
+      .select('*')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data as SupabaseUsuarioRow;
+  }
+
+  private async criarUsuarioParaAuth(
+    client: ReturnType<typeof getSupabaseClient>,
+    authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown> | null },
+  ): Promise<SupabaseUsuarioRow | null> {
+    const email = normalizarEmail(authUser.email ?? '');
+
+    if (!email) {
+      return null;
+    }
+
+    const nomeMetadata =
+      typeof authUser.user_metadata?.nome === 'string'
+        ? authUser.user_metadata.nome
+        : typeof authUser.user_metadata?.name === 'string'
+          ? authUser.user_metadata.name
+          : null;
+
+    const { data, error } = await client
+      .from('TB_USUARIO')
+      .insert({
+        ID_AUTH: authUser.id,
+        NM_USUARIO: nomeMetadata?.trim() || obterNomeFallback(email),
+        DS_EMAIL: email,
+        TP_USUARIO: enumTipoUsuario.NaoDefinido,
+        IS_ADM: false,
+      })
+      .select('*')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data as SupabaseUsuarioRow;
+  }
+
+  private async resolverUsuarioAutenticado(
+    client: ReturnType<typeof getSupabaseClient>,
+    authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown> | null },
+  ): Promise<Usuario | null> {
+    const usuarioPorAuthId = await this.buscarUsuarioPorAuthId(client, authUser.id);
+    if (usuarioPorAuthId) {
+      return mapSupabaseUsuarioRowToDomain(usuarioPorAuthId);
+    }
+
+    const email = authUser.email ?? '';
+    if (email) {
+      const usuarioPorEmail = await this.buscarUsuarioPorEmail(client, email);
+      if (usuarioPorEmail) {
+        const usuarioVinculado = await this.vincularAuthAoUsuarioExistente(
+          client,
+          usuarioPorEmail,
+          authUser.id,
+        );
+        return mapSupabaseUsuarioRowToDomain(usuarioVinculado);
+      }
+    }
+
+    const usuarioCriado = await this.criarUsuarioParaAuth(client, authUser);
+    return usuarioCriado ? mapSupabaseUsuarioRowToDomain(usuarioCriado) : null;
+  }
+
   async getCurrentUsuario(): Promise<Usuario | null> {
     const client = getSupabaseClient(process.env as Record<string, string | undefined>);
     const {
@@ -56,14 +182,7 @@ export class SupabaseAuthDataSource implements AuthRepository {
     }
     if (!user) return null;
 
-    const { data, error } = await client
-      .from('TB_USUARIO')
-      .select('*')
-      .eq('ID_AUTH', user.id)
-      .single();
-
-    if (error) throw error;
-    return data ? mapSupabaseUsuarioRowToDomain(data as SupabaseUsuarioRow) : null;
+    return this.resolverUsuarioAutenticado(client, user);
   }
 
   async logout(): Promise<void> {
@@ -73,13 +192,12 @@ export class SupabaseAuthDataSource implements AuthRepository {
     if (error) throw error;
   }
 
-  
   async login(input: LoginInput): Promise<Usuario | null> {
     const client = getSupabaseClient(process.env as Record<string, string | undefined>);
-    
+
     const { data: authData, error: authError } = await client.auth.signInWithPassword({
-      email: input.email.trim().toLowerCase(),
-      password: input.senha.trim(),
+      email: normalizarEmail(input.email),
+      password: input.senha,
     });
 
     if (authError) {
@@ -91,14 +209,7 @@ export class SupabaseAuthDataSource implements AuthRepository {
     }
     if (!authData.user) return null;
 
-    const { data, error } = await client
-      .from('TB_USUARIO')
-      .select('*')
-      .eq('ID_AUTH', authData.user.id)
-      .single();
-
-    if (error) throw error;
-    return data ? mapSupabaseUsuarioRowToDomain(data as SupabaseUsuarioRow) : null;
+    return this.resolverUsuarioAutenticado(client, authData.user);
   }
 
   async finalizarCadastro(input: FinalizarCadastroInput): Promise<Usuario | null> {
@@ -106,8 +217,8 @@ export class SupabaseAuthDataSource implements AuthRepository {
     const { email, senha, nome } = input.cadastro;
 
     const { data: authData, error: authError } = await client.auth.signUp({
-      email: email.trim().toLowerCase(),
-      password: senha.trim(),
+      email: normalizarEmail(email),
+      password: senha,
     });
 
     if (authError) {
@@ -115,7 +226,6 @@ export class SupabaseAuthDataSource implements AuthRepository {
     }
     if (!authData.user) return null;
 
-    // Obtém a string do Enum (ex: 'Gestante' ou 'Menopausa')
     const tipoUsuarioValor = mapearPerfilParaEnum(input.perfil);
 
     const { data: dbData, error: dbError } = await client
@@ -123,15 +233,14 @@ export class SupabaseAuthDataSource implements AuthRepository {
       .insert({
         ID_AUTH: authData.user.id,
         NM_USUARIO: nome,
-        DS_EMAIL: email.trim().toLowerCase(),
-        TP_USUARIO: tipoUsuarioValor, // Agora envia a String correta
-        IS_ADM: false 
+        DS_EMAIL: normalizarEmail(email),
+        TP_USUARIO: tipoUsuarioValor,
+        IS_ADM: false
       })
       .select()
       .single();
 
     if (dbError) {
-      // Se der erro aqui, verifique se a coluna TP_USUARIO no Supabase é TEXT
       console.error("Erro ao salvar na TB_USUARIO:", dbError.message);
       throw dbError;
     }

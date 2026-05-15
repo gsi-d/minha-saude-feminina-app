@@ -30,7 +30,7 @@ export default function LoginScreen() {
       setLoading(false);
 
       if (sucesso) {
-        router.replace("/(tabs)");
+        return;
       } else {
         Alert.alert("Erro", "E-mail ou senha inválidos.");
       }

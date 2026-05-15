@@ -1,16 +1,15 @@
 import {
   DarkTheme as NavigationDarkTheme,
   DefaultTheme as NavigationDefaultTheme,
-  Theme as NavigationTheme, // <-- Importamos o tipo base do Navigation
+  Theme as NavigationTheme,
 } from "@react-navigation/native";
 import {
   adaptNavigationTheme,
   MD3DarkTheme,
   MD3LightTheme,
-  MD3Theme, // <-- Importamos o tipo base do Paper
+  MD3Theme,
 } from "react-native-paper";
 
-// 1. A MÁGICA: Criamos um tipo que une os dois mundos!
 export type AppTheme = MD3Theme & NavigationTheme;
 
 const { LightTheme, DarkTheme } = adaptNavigationTheme({

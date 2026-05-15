@@ -88,7 +88,7 @@ export default function CadastroGestandeScreen() {
     }
 
     if (sucesso) {
-      router.replace("/(tabs)");
+      return;
     } else if (!handledError) {
       Alert.alert("Erro", "Não foi possível concluir o cadastro.");
     }
