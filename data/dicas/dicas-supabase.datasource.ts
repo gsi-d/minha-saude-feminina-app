@@ -8,7 +8,7 @@ import type { Dica } from './dicas.types';
 
 export class SupabaseDicasDataSource {
   async listByTipoUsuarioAndTags(tipoUsuario: enumTipoUsuario, tags: string[]): Promise<Dica[]> {
-    const client = getSupabaseClient(process.env as Record<string, string | undefined>);
+    const client = getSupabaseClient();
 
     const { data, error } = await client
       .from('TB_DICA')

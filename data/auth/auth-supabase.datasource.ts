@@ -155,7 +155,7 @@ export class SupabaseAuthDataSource implements AuthRepository {
   }
 
   async getCurrentUsuario(): Promise<Usuario | null> {
-    const client = getSupabaseClient(process.env as Record<string, string | undefined>);
+    const client = getSupabaseClient();
     const {
       data: { session },
       error: sessionError,
@@ -186,14 +186,14 @@ export class SupabaseAuthDataSource implements AuthRepository {
   }
 
   async logout(): Promise<void> {
-    const client = getSupabaseClient(process.env as Record<string, string | undefined>);
+    const client = getSupabaseClient();
     const { error } = await client.auth.signOut();
 
     if (error) throw error;
   }
 
   async login(input: LoginInput): Promise<Usuario | null> {
-    const client = getSupabaseClient(process.env as Record<string, string | undefined>);
+    const client = getSupabaseClient();
 
     const { data: authData, error: authError } = await client.auth.signInWithPassword({
       email: normalizarEmail(input.email),
@@ -213,7 +213,7 @@ export class SupabaseAuthDataSource implements AuthRepository {
   }
 
   async finalizarCadastro(input: FinalizarCadastroInput): Promise<Usuario | null> {
-    const client = getSupabaseClient(process.env as Record<string, string | undefined>);
+    const client = getSupabaseClient();
     const { email, senha, nome } = input.cadastro;
 
     const { data: authData, error: authError } = await client.auth.signUp({
