@@ -27,7 +27,7 @@ export function filterConteudosForTipoUsuario(
 
 export class SupabaseConteudosDataSource {
   async listByTipoUsuario(tipoUsuario: enumTipoUsuario): Promise<Conteudo[]> {
-    const client = getSupabaseClient(process.env as Record<string, string | undefined>);
+    const client = getSupabaseClient();
 
     const { data, error } = await client
       .from('TB_CONTEUDO')

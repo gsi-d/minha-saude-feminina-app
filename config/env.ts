@@ -1,6 +1,6 @@
-export function getSupabaseConfig(env: Record<string, string | undefined>) {
+export function getSupabaseConfig() {
   return {
-    url: env.EXPO_PUBLIC_SUPABASE_URL ?? '',
-    anonKey: env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+    url: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
+    anonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
   };
 }

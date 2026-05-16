@@ -4,8 +4,8 @@ import { getSupabaseConfig } from '../../config/env';
 
 let client: SupabaseClient | null = null;
 
-export function getSupabaseClient(env: Record<string, string | undefined>) {
-  const { url, anonKey } = getSupabaseConfig(env);
+export function getSupabaseClient() {
+  const { url, anonKey } = getSupabaseConfig();
 
   if (!url || !anonKey) {
     throw new Error('Supabase config is missing');
