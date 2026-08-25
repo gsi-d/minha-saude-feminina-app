@@ -1,28 +1,136 @@
-import type { Conteudo } from '../../domain/conteudos/types';
-import { mapTipoUsuarioDbToEnum } from '../../utils/mapTipoUsuarioDb';
+import { enumTipoUsuario } from "../../constants/enums";
+import { isDocumentoConteudo } from "../../domain/conteudos/documento";
+import type {
+  Conteudo,
+  PublicoConteudo,
+  ResumoConteudo,
+  StatusConteudo,
+} from "../../domain/conteudos/types";
 
-export interface SupabaseConteudoRow {
-  ID: string;
-  TITULO: string;
-  RESUMO: string | null;
-  CONTEUDO_COMPLETO: string | null;
-  TAG: string | null;
-  TP_USUARIO: string | number | null;
-  CREATED_AT: string | null;
+export type SupabasePublicoConteudo = "adolescente" | "gestante" | "tentante" | "menopausa";
+export type SupabaseStatusConteudo = "rascunho" | "publicado" | "arquivado";
+
+export interface SupabaseCategoriaConteudoRow {
+  ID: number | string;
+  NM_CATEGORIA: string;
+  TP_CATEGORIA: string;
+  IS_ATIVO: boolean;
 }
 
-function normalizeConteudoTag(tag: string | null | undefined) {
-  const normalizedTag = tag?.trim().toLowerCase() ?? '';
-  return normalizedTag || 'geral';
+export interface SupabaseResumoConteudoRow {
+  ID: number | string;
+  ID_CATEGORIA: number | string;
+  NM_TITULO: string;
+  DS_RESUMO: string | null;
+  DS_URL_IMAGEM: string | null;
+  TP_PERFIL_ALVO: SupabasePublicoConteudo | string;
+  TP_STATUS: SupabaseStatusConteudo | string;
+  DT_ATUALIZACAO: string;
+  CATEGORIA: SupabaseCategoriaConteudoRow | SupabaseCategoriaConteudoRow[];
 }
 
-export function mapSupabaseConteudoRowToDomain(row: SupabaseConteudoRow): Conteudo {
+export interface SupabaseConteudoDetalheRow extends SupabaseResumoConteudoRow {
+  DS_CORPO_TEXTO: unknown;
+  DS_URL_FONTE: string | null;
+  DT_CADASTRO: string;
+}
+
+export class DadosConteudoInvalidosError extends Error {
+  constructor(message = "Os dados do conteúdo são inválidos.") {
+    super(message);
+    this.name = "DadosConteudoInvalidosError";
+  }
+}
+
+export class DocumentoConteudoInvalidoError extends DadosConteudoInvalidosError {
+  constructor() {
+    super("O documento do conteúdo é inválido.");
+    this.name = "DocumentoConteudoInvalidoError";
+  }
+}
+
+const publicosDoBanco: Record<SupabasePublicoConteudo, PublicoConteudo> = {
+  adolescente: enumTipoUsuario.Adolescente,
+  gestante: enumTipoUsuario.Gestante,
+  tentante: enumTipoUsuario.Tentante,
+  menopausa: enumTipoUsuario.Menopausa,
+};
+
+const publicosParaBanco: Record<PublicoConteudo, SupabasePublicoConteudo> = {
+  [enumTipoUsuario.Adolescente]: "adolescente",
+  [enumTipoUsuario.Gestante]: "gestante",
+  [enumTipoUsuario.Tentante]: "tentante",
+  [enumTipoUsuario.Menopausa]: "menopausa",
+};
+
+const statusDoBanco: Record<SupabaseStatusConteudo, StatusConteudo> = {
+  rascunho: "RASCUNHO",
+  publicado: "PUBLICADO",
+  arquivado: "ARQUIVADO",
+};
+
+export function mapPublicoSupabaseParaDominio(value: unknown): PublicoConteudo | null {
+  return typeof value === "string"
+    ? publicosDoBanco[value as SupabasePublicoConteudo] ?? null
+    : null;
+}
+
+export function mapPublicoDominioParaSupabase(value: enumTipoUsuario): SupabasePublicoConteudo | null {
+  return publicosParaBanco[value as PublicoConteudo] ?? null;
+}
+
+export function mapStatusSupabaseParaDominio(value: unknown): StatusConteudo | null {
+  return typeof value === "string"
+    ? statusDoBanco[value as SupabaseStatusConteudo] ?? null
+    : null;
+}
+
+function obterCategoria(row: SupabaseResumoConteudoRow): SupabaseCategoriaConteudoRow {
+  const categoria = Array.isArray(row.CATEGORIA) ? row.CATEGORIA[0] : row.CATEGORIA;
+  if (!categoria || typeof categoria.NM_CATEGORIA !== "string" || categoria.NM_CATEGORIA.trim() === "") {
+    throw new DadosConteudoInvalidosError("A categoria do conteúdo é inválida.");
+  }
+  return categoria;
+}
+
+function obterData(value: string): Date {
+  const data = new Date(value);
+  if (Number.isNaN(data.getTime())) {
+    throw new DadosConteudoInvalidosError("A data do conteúdo é inválida.");
+  }
+  return data;
+}
+
+export function mapSupabaseResumoConteudoParaDominio(
+  row: SupabaseResumoConteudoRow,
+): ResumoConteudo {
+  const categoria = obterCategoria(row);
+  if (typeof row.NM_TITULO !== "string" || row.NM_TITULO.trim() === "") {
+    throw new DadosConteudoInvalidosError("O título do conteúdo é inválido.");
+  }
+
   return {
-    id: row.ID,
-    titulo: row.TITULO,
-    resumo: row.RESUMO ?? '',
-    conteudoCompleto: row.CONTEUDO_COMPLETO ?? '',
-    tag: normalizeConteudoTag(row.TAG),
-    tipo: mapTipoUsuarioDbToEnum(row.TP_USUARIO),
+    id: String(row.ID),
+    titulo: row.NM_TITULO,
+    resumo: row.DS_RESUMO ?? "",
+    imagemCapa: row.DS_URL_IMAGEM ?? null,
+    categoria: { id: String(categoria.ID), nome: categoria.NM_CATEGORIA },
+    publico: mapPublicoSupabaseParaDominio(row.TP_PERFIL_ALVO),
+    atualizadoEm: obterData(row.DT_ATUALIZACAO),
+  };
+}
+
+export function mapSupabaseConteudoDetalheParaDominio(
+  row: SupabaseConteudoDetalheRow,
+): Conteudo {
+  if (!isDocumentoConteudo(row.DS_CORPO_TEXTO)) {
+    throw new DocumentoConteudoInvalidoError();
+  }
+
+  return {
+    ...mapSupabaseResumoConteudoParaDominio(row),
+    corpo: row.DS_CORPO_TEXTO,
+    urlFonte: row.DS_URL_FONTE ?? null,
+    cadastradoEm: obterData(row.DT_CADASTRO),
   };
 }
