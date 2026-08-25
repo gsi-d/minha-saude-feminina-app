@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createConteudosRepository } from "@/data/conteudos/conteudos.repository";
 import { createDicasRepository } from "@/data/dicas/dicas.repository";
 import { Dica } from "@/data/dicas/dicas.types";
-import type { Conteudo } from "@/domain/conteudos/types";
+import type { ResumoConteudo } from "@/domain/conteudos/types";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
@@ -23,76 +23,50 @@ const dicasRepository = createDicasRepository();
 const HOME_CARD_CONFIG: Record<enumTipoUsuario, {
   titulo: string;
   subtitulo: string;
-  tagPrincipal: string;
-  tagsFallback: string[];
   tagsDicas: string[];
   descricaoVazia: string;
 }> = {
   [enumTipoUsuario.Adolescente]: {
     titulo: "Ciclo Menstrual",
     subtitulo: "Dicas para sua fase de desenvolvimento",
-    tagPrincipal: "menstruação",
-    tagsFallback: ["bem-estar", "saúde"],
     tagsDicas: ["menstruação", "bem-estar", "contracepção"],
     descricaoVazia: "Conteúdos sobre ciclo e fluxo aparecerão aqui.",
   },
   [enumTipoUsuario.Gestante]: {
     titulo: "Gestação",
     subtitulo: "Acompanhando sua jornada",
-    tagPrincipal: "saúde",
-    tagsFallback: ["bem-estar"],
     tagsDicas: ["saúde", "bem-estar"],
     descricaoVazia: "Informações sobre pré-natal aparecerão aqui.",
   },
   [enumTipoUsuario.Tentante]: {
     titulo: "Planejamento",
     subtitulo: "Conteúdo para sua janela fértil",
-    tagPrincipal: "menstruação",
-    tagsFallback: ["saúde", "bem-estar"],
     tagsDicas: ["menstruação", "saúde", "bem-estar"],
     descricaoVazia: "Dicas de fertilidade aparecerão aqui.",
   },
   [enumTipoUsuario.Menopausa]: {
     titulo: "Climatério",
     subtitulo: "Bem-estar nesta nova fase",
-    tagPrincipal: "saúde",
-    tagsFallback: ["bem-estar"],
     tagsDicas: ["saúde", "bem-estar"],
     descricaoVazia: "Conteúdos sobre menopausa aparecerão aqui.",
   },
   [enumTipoUsuario.NaoDefinido]: {
     titulo: "Saúde Feminina",
     subtitulo: "Dicas gerais para o seu dia",
-    tagPrincipal: "saúde",
-    tagsFallback: ["bem-estar"],
     tagsDicas: ["saúde", "bem-estar"],
     descricaoVazia: "Configure seu perfil para dicas personalizadas.",
   },
   [enumTipoUsuario.Administrador]: {
     titulo: "Painel Admin",
     subtitulo: "Gestão do sistema",
-    tagPrincipal: "geral",
-    tagsFallback: ["saúde"],
     tagsDicas: ["saúde", "bem-estar"],
     descricaoVazia: "Nenhum dado pendente.",
   },
 };
 
 function selecionarConteudoDestaque(
-  conteudos: Conteudo[],
-  tipoUsuario: enumTipoUsuario,
-): Conteudo | null {
-  const config = HOME_CARD_CONFIG[tipoUsuario];
-  const tagsPrioritarias = [config.tagPrincipal, ...config.tagsFallback];
-
-  for (const tag of tagsPrioritarias) {
-    const conteudo = conteudos.find((item) => item.tag === tag);
-
-    if (conteudo) {
-      return conteudo;
-    }
-  }
-
+  conteudos: ResumoConteudo[],
+): ResumoConteudo | null {
   return conteudos[0] ?? null;
 }
 
@@ -109,7 +83,7 @@ export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { usuario } = useAuth();
-  const [conteudoDestaque, setConteudoDestaque] = useState<Conteudo | null>(null);
+  const [conteudoDestaque, setConteudoDestaque] = useState<ResumoConteudo | null>(null);
   const [dicaDoDia, setDicaDoDia] = useState<Dica | null>(null);
 
 const tipoUsuarioAtual = (usuario?.tipoUsuario as enumTipoUsuario) || enumTipoUsuario.NaoDefinido;
@@ -123,27 +97,23 @@ const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
     let ativo = true;
 
     const loadHomeData = async () => {
-      const [conteudos, dicasPerfil, dicasFallback] = await Promise.all([
-        conteudosRepository.listByTipoUsuario(tipoUsuarioAtual),
-        dicasRepository.listByTipoUsuarioAndTags(
-          tipoUsuarioAtual,
-          tagsDicas,
-        ),
-        dicasRepository.listByTipoUsuarioAndTags(
-          enumTipoUsuario.NaoDefinido,
-          tagsDicas,
-        ),
-      ]);
+      try {
+        const [conteudos, dicasPerfil, dicasFallback] = await Promise.all([
+          conteudosRepository.listPublishedByAudience(tipoUsuarioAtual),
+          dicasRepository.listByTipoUsuarioAndTags(tipoUsuarioAtual, tagsDicas),
+          dicasRepository.listByTipoUsuarioAndTags(enumTipoUsuario.NaoDefinido, tagsDicas),
+        ]);
 
-      if (!ativo) {
-        return;
+        if (!ativo) return;
+        setConteudoDestaque(selecionarConteudoDestaque(conteudos));
+        setDicaDoDia(
+          selecionarDicaAleatoria(dicasPerfil) ?? selecionarDicaAleatoria(dicasFallback),
+        );
+      } catch {
+        if (!ativo) return;
+        setConteudoDestaque(null);
+        setDicaDoDia(null);
       }
-
-      setConteudoDestaque(selecionarConteudoDestaque(conteudos, tipoUsuarioAtual));
-      setDicaDoDia(
-        selecionarDicaAleatoria(dicasPerfil) ??
-          selecionarDicaAleatoria(dicasFallback)
-      );
     };
 
     void loadHomeData();
@@ -163,10 +133,6 @@ const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
       pathname: "/conteudoDetalhe/[id]",
       params: {
         id: conteudoDestaque.id,
-        titulo: conteudoDestaque.titulo,
-        resumo: conteudoDestaque.resumo,
-        conteudoCompleto: conteudoDestaque.conteudoCompleto,
-        tag: conteudoDestaque.tag,
       },
     });
   };

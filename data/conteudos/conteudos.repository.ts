@@ -1,9 +1,13 @@
-import { enumTipoUsuario } from '../../constants/enums';
-import type { Conteudo } from '../../domain/conteudos/types';
-import { SupabaseConteudosDataSource } from './conteudos-supabase.datasource';
+import { enumTipoUsuario } from "../../constants/enums";
+import type { Conteudo, ResumoConteudo } from "../../domain/conteudos/types";
+import { SupabaseConteudosDataSource } from "./conteudos-supabase.datasource";
 
 export interface ConteudosRepository {
-  listByTipoUsuario(tipoUsuario: enumTipoUsuario): Promise<Conteudo[]>;
+  listPublishedByAudience(tipoUsuario: enumTipoUsuario): Promise<ResumoConteudo[]>;
+  findPublishedByIdForAudience(
+    id: string,
+    tipoUsuario: enumTipoUsuario,
+  ): Promise<Conteudo | null>;
 }
 
 export function createConteudosRepository(): ConteudosRepository {
