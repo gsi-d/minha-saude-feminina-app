@@ -19,6 +19,7 @@ import type {
   NoConteudo,
 } from "../../domain/conteudos/types";
 import {
+  criarHtmlEmbedYoutube,
   normalizarUrlYoutube,
   obterEstrategiaNoConteudo,
   obterTextoProprioFallback,
@@ -112,8 +113,9 @@ function YoutubeNode({ source }: { source: unknown }) {
   const [falhou, setFalhou] = useState(false);
   const embedUrl = normalizarUrlYoutube(source);
   const externalUrl = obterUrlHttpSegura(source);
+  const embedHtml = embedUrl ? criarHtmlEmbedYoutube(embedUrl) : null;
 
-  if (!embedUrl || falhou) {
+  if (!embedUrl || !embedHtml || falhou) {
     return (
       <View style={styles.videoFallback}>
         <Text style={styles.videoFallbackText}>Este vídeo não pôde ser incorporado.</Text>
@@ -130,18 +132,26 @@ function YoutubeNode({ source }: { source: unknown }) {
     <View style={styles.videoContainer}>
       <WebView
         allowsFullscreenVideo
+        allowsInlineMediaPlayback
         domStorageEnabled
         javaScriptEnabled
+        mediaPlaybackRequiresUserAction={false}
         onError={() => setFalhou(true)}
         onHttpError={() => setFalhou(true)}
         onShouldStartLoadWithRequest={(request) => {
-          if (request.url === embedUrl || request.url === "about:blank") return true;
+          if (
+            request.url === "about:blank"
+            || request.url.startsWith("https://www.youtube.com/embed/")
+            || request.url.startsWith("https://www.youtube-nocookie.com/embed/")
+            || request.url.startsWith("https://www.youtube.com/s/player/")
+            || request.url.startsWith("https://www.youtube-nocookie.com/s/player/")
+          ) return true;
           const external = obterUrlHttpSegura(request.url);
           if (external) void abrirUrlExterna(external);
           return false;
         }}
-        originWhitelist={["https://www.youtube-nocookie.com"]}
-        source={{ uri: embedUrl }}
+        originWhitelist={["*"]}
+        source={{ baseUrl: "https://www.youtube.com", html: embedHtml }}
         style={styles.video}
       />
     </View>

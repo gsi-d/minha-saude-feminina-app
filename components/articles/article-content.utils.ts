@@ -49,11 +49,54 @@ export function normalizarUrlYoutube(source: unknown): string | null {
     if (!videoId && url.pathname.startsWith("/embed/")) {
       videoId = url.pathname.split("/")[2] ?? null;
     }
+    if (!videoId && url.pathname.startsWith("/shorts/")) {
+      videoId = url.pathname.split("/")[2] ?? null;
+    }
+    if (!videoId && url.pathname.startsWith("/live/")) {
+      videoId = url.pathname.split("/")[2] ?? null;
+    }
   }
 
   return videoId && /^[a-zA-Z0-9_-]{11}$/.test(videoId)
     ? `https://www.youtube-nocookie.com/embed/${videoId}`
     : null;
+}
+
+export function criarHtmlEmbedYoutube(embedUrl: string): string {
+  const safeUrl = JSON.stringify(`${embedUrl}?playsinline=1&rel=0&modestbranding=1`);
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      iframe {
+        border: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe
+      src=${safeUrl}
+      title="YouTube video player"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen
+      referrerpolicy="strict-origin-when-cross-origin"
+    ></iframe>
+  </body>
+</html>`;
 }
 
 export function obterEstrategiaNoConteudo(type: string): string {

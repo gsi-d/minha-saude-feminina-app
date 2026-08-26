@@ -6,4 +6,7 @@ export interface Dica {
   texto: string;
   tag: string;
   tipo: enumTipoUsuario;
+  categoriaId: string | null;
+  categoriaNome: string | null;
+  dataExibicaoSugerida: Date | null;
 }

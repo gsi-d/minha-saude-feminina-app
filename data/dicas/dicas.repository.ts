@@ -3,6 +3,7 @@ import { SupabaseDicasDataSource } from './dicas-supabase.datasource';
 import type { Dica } from './dicas.types';
 
 export interface DicasRepository {
+  listByTipoUsuario(tipoUsuario: enumTipoUsuario): Promise<Dica[]>;
   listByTipoUsuarioAndTags(tipoUsuario: enumTipoUsuario, tags: string[]): Promise<Dica[]>;
 }
 

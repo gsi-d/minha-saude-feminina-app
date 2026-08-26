@@ -1,9 +1,10 @@
 import { enumTipoUsuario } from "../../constants/enums";
 import type { Conteudo, ResumoConteudo } from "../../domain/conteudos/types";
 import { getSupabaseClient } from "../../services/supabase/client";
+import { tipoUsuarioDbCorrespondeEnum } from "../../utils/mapTipoUsuarioDb";
 import {
-  mapPublicoDominioParaSupabase,
   mapSupabaseConteudoDetalheParaDominio,
+  mapStatusSupabaseParaDominio,
   mapSupabaseResumoConteudoParaDominio,
   type SupabaseConteudoDetalheRow,
   type SupabaseResumoConteudoRow,
@@ -71,17 +72,11 @@ function mapErroSupabase(error: unknown): ErroConteudosRepository {
 
 export class SupabaseConteudosDataSource implements ConteudosRepository {
   async listPublishedByAudience(tipoUsuario: enumTipoUsuario): Promise<ResumoConteudo[]> {
-    const publico = mapPublicoDominioParaSupabase(tipoUsuario);
-    if (!publico) return [];
-
     const client = getSupabaseClient();
 
     const { data, error } = await client
       .from("TB_CONTEUDO")
       .select(RESUMO_SELECT)
-      .eq("TP_STATUS", "publicado")
-      .eq("TP_PERFIL_ALVO", publico)
-      .eq("CATEGORIA.TP_CATEGORIA", "conteudo")
       .eq("CATEGORIA.IS_ATIVO", true)
       .order("DT_ATUALIZACAO", { ascending: false });
 
@@ -90,25 +85,27 @@ export class SupabaseConteudosDataSource implements ConteudosRepository {
     }
 
     return ((data ?? []) as unknown as SupabaseResumoConteudoRow[])
+      .filter((row) => mapStatusSupabaseParaDominio(row.TP_STATUS) === "PUBLICADO")
+      .filter((row) => {
+        const categoria = Array.isArray(row.CATEGORIA) ? row.CATEGORIA[0] : row.CATEGORIA;
+        return categoria?.TP_CATEGORIA == null || String(categoria.TP_CATEGORIA).trim() === "" || String(categoria.TP_CATEGORIA).toLowerCase() === "conteudo";
+      })
+      .filter((row) => tipoUsuarioDbCorrespondeEnum(row.TP_PERFIL_ALVO, tipoUsuario))
       .map(mapSupabaseResumoConteudoParaDominio)
-      .filter((conteudo) => conteudo.publico === tipoUsuario);
+      .filter((conteudo) => conteudo.publico === tipoUsuario || conteudo.publico === null);
   }
 
   async findPublishedByIdForAudience(
     id: string,
     tipoUsuario: enumTipoUsuario,
   ): Promise<Conteudo | null> {
-    const publico = mapPublicoDominioParaSupabase(tipoUsuario);
-    if (!publico || !/^\d+$/.test(id)) return null;
+    if (!/^\d+$/.test(id)) return null;
 
     const client = getSupabaseClient();
     const { data, error } = await client
       .from("TB_CONTEUDO")
       .select(DETALHE_SELECT)
       .eq("ID", id)
-      .eq("TP_STATUS", "publicado")
-      .eq("TP_PERFIL_ALVO", publico)
-      .eq("CATEGORIA.TP_CATEGORIA", "conteudo")
       .eq("CATEGORIA.IS_ATIVO", true)
       .maybeSingle();
 
@@ -117,9 +114,26 @@ export class SupabaseConteudosDataSource implements ConteudosRepository {
     }
     if (!data) return null;
 
+    if (mapStatusSupabaseParaDominio(data.TP_STATUS) !== "PUBLICADO") {
+      return null;
+    }
+
+    const categoria = Array.isArray(data.CATEGORIA) ? data.CATEGORIA[0] : data.CATEGORIA;
+    if (
+      categoria?.TP_CATEGORIA != null
+      && String(categoria.TP_CATEGORIA).trim() !== ""
+      && String(categoria.TP_CATEGORIA).toLowerCase() !== "conteudo"
+    ) {
+      return null;
+    }
+
+    if (!tipoUsuarioDbCorrespondeEnum(data.TP_PERFIL_ALVO, tipoUsuario)) {
+      return null;
+    }
+
     const conteudo = mapSupabaseConteudoDetalheParaDominio(
       data as unknown as SupabaseConteudoDetalheRow,
     );
-    return conteudo.publico === tipoUsuario ? conteudo : null;
+    return conteudo.publico === tipoUsuario || conteudo.publico === null ? conteudo : null;
   }
 }
