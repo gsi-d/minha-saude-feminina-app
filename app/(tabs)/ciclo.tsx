@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { Text, FAB, ActivityIndicator } from "react-native-paper";
+import { Text, FAB, ActivityIndicator, Button } from "react-native-paper";
 import { useCiclo } from "@/contexts/CicloContext";
 import { CartaoCicloAtivo } from "@/components/CartaoCicloAtivo";
 import { CartaoPrevisao } from "@/components/CartaoPrevisao";
+import { CartaoEstatisticas } from "@/components/CartaoEstatisticas";
+import { CalendarioCiclos } from "@/components/CalendarioCiclos";
 import { HistoricoRegistros } from "@/components/HistoricoRegistros";
-import { NovoRegistroDialog } from "@/components/NovoRegistroDialog";
+import { NovoRegistroDialogCalendario } from "@/components/NovoRegistroDialogCalendario";
 import { EncerrarRegistroDialog } from "@/components/EncerrarRegistroDialog";
 
 export default function CicloScreen() {
@@ -14,9 +16,11 @@ export default function CicloScreen() {
     registroAtivo,
     previsao,
     carregando,
+    erro,
     novoRegistro,
     encerrarRegistro,
     deletarRegistro,
+    atualizarDados,
   } = useCiclo();
 
   const [dialogNovoVisivel, setDialogNovoVisivel] = useState(false);
@@ -66,31 +70,59 @@ export default function CicloScreen() {
     );
   }
 
+  if (erro) {
+    return (
+      <View style={styles.erro}>
+        <Text style={styles.textoErro}>⚠️ Erro ao carregar</Text>
+        <Text style={styles.detalhesErro}>{erro}</Text>
+        <Button 
+          mode="contained" 
+          onPress={() => atualizarDados()}
+          style={{ marginTop: 16 }}
+        >
+          Tentar Novamente
+        </Button>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.appHeaderTitle}>Ciclo Menstrual</Text>
-
-        {registroAtivo && (
+        {registroAtivo ? (
           <CartaoCicloAtivo
             registro={registroAtivo}
             onEncerrar={handleAbrirEncerrar}
             carregando={carregandoAcao}
           />
+        ) : (
+          <View style={styles.cardVazio}>
+            <Text style={styles.textoVazio}>Nenhum ciclo em andamento</Text>
+            <Text style={styles.subtextoVazio}>Clique no + para registrar um novo ciclo</Text>
+          </View>
         )}
 
         {previsao && (
           <CartaoPrevisao previsao={previsao} />
         )}
 
-        <View style={styles.secaoHistorico}>
-          <Text style={styles.sectionTitle}>Histórico de Ciclos</Text>
-          <HistoricoRegistros
-            registros={registros.filter(r => r.id !== registroAtivo?.id)}
-            onDeletar={handleDeletarRegistro}
-            carregando={carregandoAcao}
-          />
-        </View>
+        {registros.length > 0 && (
+          <>
+            <CartaoEstatisticas registros={registros} previsao={previsao} />
+            <CalendarioCiclos registros={registros} />
+          </>
+        )}
+
+        {registros.length > 0 && (
+          <View style={styles.secaoHistorico}>
+            <Text style={styles.sectionTitle}>Histórico Completo</Text>
+            <HistoricoRegistros
+              registros={registros.filter(r => r.id !== registroAtivo?.id)}
+              onDeletar={handleDeletarRegistro}
+              carregando={carregandoAcao}
+            />
+          </View>
+        )}
 
         <View style={styles.padding} />
       </ScrollView>
@@ -102,7 +134,7 @@ export default function CicloScreen() {
         label="Novo Ciclo"
       />
 
-      <NovoRegistroDialog
+      <NovoRegistroDialogCalendario
         visivel={dialogNovoVisivel}
         carregando={carregandoAcao}
         onFechar={() => setDialogNovoVisivel(false)}
@@ -136,6 +168,24 @@ const styles = StyleSheet.create({
     color: "#D946A6",
     fontWeight: "600",
   },
+  erro: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff6f8",
+    padding: 20,
+  },
+  textoErro: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#D946A6",
+    marginBottom: 8,
+  },
+  detalhesErro: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+  },
   appHeaderTitle: {
     textAlign: "center",
     paddingTop: 40,
@@ -143,6 +193,26 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#000",
     fontSize: 24,
+  },
+  cardVazio: {
+    marginHorizontal: 20,
+    marginVertical: 16,
+    padding: 24,
+    backgroundColor: "#FFF9FB",
+    borderColor: "#F0D0E0",
+    borderWidth: 2,
+    borderRadius: 16,
+    alignItems: "center",
+  },
+  textoVazio: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 8,
+  },
+  subtextoVazio: {
+    fontSize: 13,
+    color: "#999",
   },
   secaoHistorico: {
     marginTop: 12,
