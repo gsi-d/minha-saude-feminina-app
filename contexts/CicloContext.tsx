@@ -30,20 +30,25 @@ export function CicloProvider({ children }: { children: React.ReactNode }) {
     try {
       setCarregando(true);
       setErro(null);
+      console.log('[CicloContext] Iniciando carregamento de dados');
       
-      const [regs, ativo, prev] = await Promise.all([
-        cicloRepository.obterRegistros(),
-        cicloRepository.obterRegistroAtivo(),
-        cicloRepository.calcularPrevisao(),
-      ]);
+      const regs = await cicloRepository.obterRegistros();
+      console.log('[CicloContext] Registros obtidos:', regs.length);
+      
+      const ativo = await cicloRepository.obterRegistroAtivo();
+      console.log('[CicloContext] Registro ativo:', ativo?.id);
+      
+      const prev = await cicloRepository.calcularPrevisao();
+      console.log('[CicloContext] Previsão calculada');
 
       setRegistros(regs);
       setRegistroAtivo(ativo);
       setPrevisao(prev);
+      console.log('[CicloContext] Estado atualizado com sucesso');
     } catch (err) {
       const mensagem = err instanceof Error ? err.message : 'Erro ao atualizar dados';
       setErro(mensagem);
-      console.error(mensagem);
+      console.error('[CicloContext] Erro ao atualizar:', mensagem, err);
     } finally {
       setCarregando(false);
     }

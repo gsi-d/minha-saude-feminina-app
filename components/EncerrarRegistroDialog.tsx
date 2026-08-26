@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import {
   Dialog,
   Button,
   Text,
   Portal,
+  Divider,
 } from 'react-native-paper';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { Calendar } from 'react-native-calendars';
 import { RegistroCiclo } from '@/data/ciclo/ciclo.types';
 
 interface EncerrarRegistroDialogProps {
@@ -24,20 +25,13 @@ export function EncerrarRegistroDialog({
   onFechar,
   onConfirmar,
 }: EncerrarRegistroDialogProps) {
-  const [dataFim, setDataFim] = useState(new Date());
-  const [mostrarDatePicker, setMostrarDatePicker] = useState(false);
-
-  const handleDataMudada = (event: any, selectedDate?: Date) => {
-    if (selectedDate) {
-      setDataFim(selectedDate);
-    }
-    setMostrarDatePicker(false);
-  };
+  const hoje = new Date().toISOString().split('T')[0];
+  const [dataFim, setDataFim] = useState(hoje);
 
   const handleConfirmar = async () => {
     if (registro) {
       try {
-        await onConfirmar(dataFim);
+        await onConfirmar(new Date(dataFim));
         onFechar();
       } catch (error) {
         console.error('Erro ao encerrar:', error);
@@ -48,42 +42,98 @@ export function EncerrarRegistroDialog({
   if (!registro) return null;
 
   const duracao = Math.floor(
-    (dataFim.getTime() - registro.dataInicio.getTime()) / (1000 * 60 * 60 * 24)
+    (new Date(dataFim).getTime() - new Date(registro.dataInicio).getTime()) / (1000 * 60 * 60 * 24)
   ) + 1;
+
+  const inicioStr = new Date(registro.dataInicio).toISOString().split('T')[0];
+
+  const markedDates = {
+    [inicioStr]: {
+      startingDay: true,
+      color: '#FFE8F2',
+      textColor: '#D946A6',
+    },
+    [dataFim]: {
+      endingDay: true,
+      color: '#FFE8F2',
+      textColor: '#D946A6',
+    },
+  };
+
+  // Marcar datas intermediárias
+  let currentDate = new Date(registro.dataInicio);
+  while (currentDate < new Date(dataFim)) {
+    currentDate.setDate(currentDate.getDate() + 1);
+    const dateStr = currentDate.toISOString().split('T')[0];
+    if (dateStr !== dataFim) {
+      markedDates[dateStr] = {
+        color: '#FFD0E8',
+        textColor: '#D946A6',
+      };
+    }
+  }
 
   return (
     <Portal>
-      <Dialog visible={visivel} onDismiss={onFechar}>
+      <Dialog visible={visivel} onDismiss={onFechar} style={styles.dialog}>
         <Dialog.Title>Encerrar Ciclo</Dialog.Title>
         <Dialog.Content>
-          <View style={styles.content}>
+          <ScrollView style={styles.content}>
             <Text style={styles.infoText}>
-              Iniciado em: <Text style={styles.bold}>{registro.dataInicio.toLocaleDateString('pt-BR')}</Text>
+              Iniciado em: <Text style={styles.bold}>
+                {new Date(registro.dataInicio).toLocaleDateString('pt-BR')}
+              </Text>
             </Text>
 
-            <Text style={[styles.label, styles.marginTop]}>Data de término</Text>
-            <Button
-              mode="outlined"
-              onPress={() => setMostrarDatePicker(true)}
-              style={styles.button}
-            >
-              {dataFim.toLocaleDateString('pt-BR')}
-            </Button>
+            <Divider style={styles.divider} />
 
-            {mostrarDatePicker && (
-              <DateTimePicker
-                value={dataFim}
-                mode="date"
-                display="default"
-                onChange={handleDataMudada}
-                minimumDate={registro.dataInicio}
-                maximumDate={new Date()}
-              />
-            )}
+            <Text style={styles.label}>Selecione a data de término</Text>
+            <Calendar
+              current={dataFim}
+              onDayPress={(day) => setDataFim(day.dateString)}
+              minDate={inicioStr}
+              maxDate={hoje}
+              markedDates={markedDates}
+              markingType="period"
+              theme={{
+                backgroundColor: '#ffffff',
+                calendarBackground: '#ffffff',
+                textSectionTitleColor: '#999',
+                textSectionTitleDisabledColor: '#d9e1e8',
+                selectedDayBackgroundColor: '#D946A6',
+                selectedDayTextColor: '#ffffff',
+                todayTextColor: '#D946A6',
+                todayBackgroundColor: '#FFE8F2',
+                dayTextColor: '#333',
+                textDisabledColor: '#d9e1e8',
+                dotColor: '#D946A6',
+                selectedDotColor: '#ffffff',
+                arrowColor: '#D946A6',
+                disabledArrowColor: '#d9e1e8',
+                monthTextColor: '#333',
+                indicatorColor: '#D946A6',
+                textDayFontSize: 14,
+                textMonthFontSize: 16,
+                textDayHeaderFontSize: 12,
+              }}
+            />
 
-            <Text style={[styles.label, styles.marginTop]}>Duração estimada</Text>
-            <Text style={styles.duracao}>{duracao} dias</Text>
-          </View>
+            <Divider style={styles.divider} />
+
+            <Text style={styles.label}>Resumo</Text>
+            <View style={styles.resumo}>
+              <View style={styles.resumoItem}>
+                <Text style={styles.resumoLabel}>Data de término</Text>
+                <Text style={styles.resumoValor}>
+                  {new Date(dataFim).toLocaleDateString('pt-BR')}
+                </Text>
+              </View>
+              <View style={styles.resumoItem}>
+                <Text style={styles.resumoLabel}>Duração</Text>
+                <Text style={styles.resumoValor}>{duracao} dias</Text>
+              </View>
+            </View>
+          </ScrollView>
         </Dialog.Content>
         <Dialog.Actions>
           <Button onPress={onFechar} disabled={carregando}>
@@ -95,7 +145,7 @@ export function EncerrarRegistroDialog({
             loading={carregando}
             disabled={carregando}
           >
-            Confirmar
+            Encerrar Ciclo
           </Button>
         </Dialog.Actions>
       </Dialog>
@@ -104,12 +154,17 @@ export function EncerrarRegistroDialog({
 }
 
 const styles = StyleSheet.create({
+  dialog: {
+    maxHeight: '90%',
+  },
   content: {
     gap: 12,
+    maxHeight: 600,
   },
   infoText: {
     fontSize: 14,
     color: '#333',
+    marginBottom: 8,
   },
   bold: {
     fontWeight: 'bold',
@@ -118,17 +173,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#666',
-  },
-  marginTop: {
-    marginTop: 12,
-  },
-  button: {
-    marginTop: 8,
-  },
-  duracao: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#D946A6',
+    marginBottom: 8,
     marginTop: 4,
+  },
+  divider: {
+    marginVertical: 12,
+  },
+  resumo: {
+    gap: 8,
+  },
+  resumoItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#FFF9FB',
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#D946A6',
+  },
+  resumoLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#999',
+    marginBottom: 2,
+  },
+  resumoValor: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#D946A6',
   },
 });

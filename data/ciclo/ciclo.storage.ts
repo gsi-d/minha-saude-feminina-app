@@ -37,10 +37,18 @@ export class CicloStorage {
       const todos = await this.obterTodos();
       const indice = todos.findIndex(r => r.id === registro.id);
       
+      const registroSerializado = {
+        ...registro,
+        dataInicio: registro.dataInicio instanceof Date ? registro.dataInicio.toISOString() : registro.dataInicio,
+        dataFim: registro.dataFim ? (registro.dataFim instanceof Date ? registro.dataFim.toISOString() : registro.dataFim) : undefined,
+        criadoEm: registro.criadoEm instanceof Date ? registro.criadoEm.toISOString() : registro.criadoEm,
+        atualizadoEm: registro.atualizadoEm instanceof Date ? registro.atualizadoEm.toISOString() : registro.atualizadoEm,
+      };
+      
       if (indice >= 0) {
-        todos[indice] = registro;
+        todos[indice] = registroSerializado as any;
       } else {
-        todos.push(registro);
+        todos.push(registroSerializado as any);
       }
       
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
