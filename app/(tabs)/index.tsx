@@ -1,9 +1,11 @@
 import { enumTipoUsuario } from "@/constants/enums";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCiclo } from "@/contexts/CicloContext";
 import { createConteudosRepository } from "@/data/conteudos/conteudos.repository";
 import { createDicasRepository } from "@/data/dicas/dicas.repository";
 import { Dica } from "@/data/dicas/dicas.types";
 import type { ResumoConteudo } from "@/domain/conteudos/types";
+import { CalendarioResumo } from "@/components/CalendarioResumo";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -71,6 +73,7 @@ export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { usuario } = useAuth();
+  const { registros } = useCiclo();
   const [conteudoDestaque, setConteudoDestaque] = useState<ResumoConteudo | null>(null);
   const [dicaDoDia, setDicaDoDia] = useState<Dica | null>(null);
 
@@ -286,98 +289,9 @@ const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
         </Card.Content>
       </Card>
 
-      <Card
-        style={styles.calendarCard}
-        elevation={1}
-      >
-        <Card.Content>
-          <View style={styles.calendarHeader}>
-            <View style={styles.calendarTitleContainer}>
-              <MaterialCommunityIcons
-                name="calendar-heart"
-                size={22}
-                color="#C43A4A"
-              />
-
-              <Text style={styles.calendarTitle}>
-                Próximo ciclo
-              </Text>
-            </View>
-
-            <Text style={styles.calendarStatus}>
-              Regular
-            </Text>
-          </View>
-
-          <View style={styles.calendarInfoContainer}>
-            <View style={styles.calendarInfoItem}>
-              <Text style={styles.calendarLabel}>
-                Menstruação
-              </Text>
-
-              <Text style={styles.calendarDate}>
-                12 Ago
-              </Text>
-            </View>
-
-            <View style={styles.calendarInfoItem}>
-              <Text style={styles.calendarLabel}>
-                Ovulação
-              </Text>
-
-              <Text style={styles.calendarDate}>
-                24 Ago
-              </Text>
-            </View>
-
-            <View style={styles.calendarInfoItem}>
-              <Text style={styles.calendarLabel}>
-                Ciclo
-              </Text>
-
-              <Text style={styles.calendarDate}>
-                Dia 08
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.miniCalendar}>
-            {["S", "T", "Q", "Q", "S", "S", "D"].map(
-              (dia, index) => (
-                <Text
-                  key={index}
-                  style={styles.weekDay}
-                >
-                  {dia}
-                </Text>
-              )
-            )}
-
-            {[8, 9, 10, 11, 12, 13, 14].map(
-              (dia, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.dayCircle,
-                    dia === 12 &&
-                    styles.activeDayCircle,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.dayText,
-                      dia === 12 &&
-                      styles.activeDayText,
-                    ]}
-                  >
-                    {dia}
-                  </Text>
-                </View>
-              )
-            )}
-          </View>
-        </Card.Content>
-      </Card>
+      {registros.length > 0 && (
+        <CalendarioResumo registros={registros} />
+      )}
 
       <Card style={styles.tipCard} elevation={0}>
         <Card.Content>

@@ -5,6 +5,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { PaperProvider } from "react-native-paper";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
+import { CicloProvider } from "../contexts/CicloContext";
 import { isPublicRoute } from "../utils/authRouting";
 
 // Congela a Splash Screen
@@ -62,11 +63,13 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <PaperProvider theme={theme}>
-        <ThemeProvider value={theme}>
-          <RootNavigator />
-        </ThemeProvider>
-      </PaperProvider>
+      <CicloProvider>
+        <PaperProvider theme={theme}>
+          <ThemeProvider value={theme}>
+            <RootNavigator />
+          </ThemeProvider>
+        </PaperProvider>
+      </CicloProvider>
     </AuthProvider>
   );
 }
