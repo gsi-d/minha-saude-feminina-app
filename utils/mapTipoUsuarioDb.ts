@@ -9,6 +9,24 @@ function normalizeTipoUsuarioLabel(value: string) {
     .replace(/[\s_-]+/g, '');
 }
 
+function obterRotulosTipoUsuario(tipoUsuario: enumTipoUsuario): string[] {
+  switch (tipoUsuario) {
+    case enumTipoUsuario.Adolescente:
+      return ['adolescente', 'adolescencia', 'tipopessoaadolescente', 'perfiladolescente'];
+    case enumTipoUsuario.Gestante:
+      return ['gestante', 'gravida', 'gravidez', 'tipopessoagestante', 'perfilgestante'];
+    case enumTipoUsuario.Tentante:
+      return ['tentante', 'fertilidade', 'tentandoengravidar', 'tipopessoatentante', 'perfiltentante'];
+    case enumTipoUsuario.Menopausa:
+      return ['menopausa', 'climaterio', 'tipopessoamenopausa', 'perfilmenopausa'];
+    case enumTipoUsuario.Administrador:
+      return ['administrador', 'admin'];
+    case enumTipoUsuario.NaoDefinido:
+    default:
+      return ['naodefinido', 'geral', 'todos', 'todas', 'todospublicos', 'publicogeral', 'all', ''];
+  }
+}
+
 export function mapTipoUsuarioDbToEnum(
   tipoUsuario?: number | string | null,
 ): enumTipoUsuario {
@@ -62,4 +80,24 @@ export function mapTipoUsuarioEnumToDb(tipoUsuario: enumTipoUsuario): number {
     default:
       return 5;
   }
+}
+
+export function tipoUsuarioDbCorrespondeEnum(
+  tipoUsuarioDb: number | string | null | undefined,
+  tipoUsuario: enumTipoUsuario,
+): boolean {
+  if (mapTipoUsuarioDbToEnum(tipoUsuarioDb) === tipoUsuario) {
+    return true;
+  }
+
+  if (typeof tipoUsuarioDb !== 'string') {
+    return false;
+  }
+
+  const valorNormalizado = normalizeTipoUsuarioLabel(tipoUsuarioDb);
+  return obterRotulosTipoUsuario(tipoUsuario).some((rotulo) =>
+    rotulo === valorNormalizado
+    || valorNormalizado.includes(rotulo)
+    || rotulo.includes(valorNormalizado),
+  );
 }

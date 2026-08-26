@@ -2,6 +2,8 @@ import { enumTipoUsuario } from "@/constants/enums";
 import { useAuth } from "@/contexts/AuthContext";
 import { ErroConteudosRepository } from "@/data/conteudos/conteudos-supabase.datasource";
 import { createConteudosRepository } from "@/data/conteudos/conteudos.repository";
+import { createDicasRepository } from "@/data/dicas/dicas.repository";
+import type { Dica } from "@/data/dicas/dicas.types";
 import { extrairCategoriasUnicas, filtrarResumosPorCategoria } from "@/domain/conteudos/conteudos.utils";
 import type { ResumoConteudo } from "@/domain/conteudos/types";
 import { obterUrlImagemSegura } from "@/components/articles/article-content.utils";
@@ -14,6 +16,7 @@ import { ActivityIndicator, FlatList, ScrollView, StyleSheet, TouchableOpacity, 
 import { Button, Card, Text } from "react-native-paper";
 
 const conteudosRepository = createConteudosRepository();
+const dicasRepository = createDicasRepository();
 
 const CORES_LAYOUT = {
   headerBackground: "#9B51E0",
@@ -30,10 +33,29 @@ function mensagemDeErro(error: unknown) {
   return "Não foi possível carregar os artigos agora. Tente novamente.";
 }
 
+function normalizarTexto(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function selecionarDicaRelacionada(dicas: Dica[], categoriaNome?: string) {
+  if (!categoriaNome) return [];
+
+  const categoriaNormalizada = normalizarTexto(categoriaNome);
+  return dicas.filter((dica) => {
+    const categoriaDica = dica.categoriaNome ?? dica.tag;
+    return normalizarTexto(categoriaDica) === categoriaNormalizada;
+  });
+}
+
 export default function ConteudosScreen() {
   const router = useRouter();
   const { usuario } = useAuth();
   const [resumos, setResumos] = useState<ResumoConteudo[]>([]);
+  const [dicas, setDicas] = useState<Dica[]>([]);
   const [categoriaAtivaId, setCategoriaAtivaId] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [atualizando, setAtualizando] = useState(false);
@@ -61,11 +83,27 @@ export default function ConteudosScreen() {
     }
 
     try {
-      const resultado = await conteudosRepository.listPublishedByAudience(tipoUsuarioAtual);
-      if (mountedRef.current && requestId === requestRef.current) setResumos(resultado);
+      const resultadoConteudos = await conteudosRepository.listPublishedByAudience(tipoUsuarioAtual);
+
+      let dicasCarregadas: Dica[] = [];
+      try {
+        const [resultadoDicasPerfil, resultadoDicasGerais] = await Promise.all([
+          dicasRepository.listByTipoUsuario(tipoUsuarioAtual),
+          dicasRepository.listByTipoUsuario(enumTipoUsuario.NaoDefinido),
+        ]);
+        dicasCarregadas = resultadoDicasPerfil.length > 0 ? resultadoDicasPerfil : resultadoDicasGerais;
+      } catch {
+        dicasCarregadas = [];
+      }
+
+      if (mountedRef.current && requestId === requestRef.current) {
+        setResumos(resultadoConteudos);
+        setDicas(dicasCarregadas);
+      }
     } catch (error) {
       if (mountedRef.current && requestId === requestRef.current) {
         setResumos([]);
+        setDicas([]);
         setErro(mensagemDeErro(error));
       }
     } finally {
@@ -97,6 +135,10 @@ export default function ConteudosScreen() {
     [categoriaAtivaId, resumos],
   );
   const categoriaAtiva = categorias.find((categoria) => categoria.id === categoriaAtivaId);
+  const dicasDaCategoria = useMemo(
+    () => selecionarDicaRelacionada(dicas, categoriaAtiva?.nome),
+    [categoriaAtiva?.nome, dicas],
+  );
 
   const header = (
     <>
@@ -138,7 +180,9 @@ export default function ConteudosScreen() {
       ) : null}
 
       {categoriaAtiva ? (
-        <Text variant="titleLarge" style={styles.sectionTitle}>Artigos sobre {categoriaAtiva.nome}</Text>
+        <>
+          <Text variant="titleLarge" style={styles.sectionTitle}>Artigos sobre {categoriaAtiva.nome}</Text>
+        </>
       ) : null}
     </>
   );
@@ -177,6 +221,22 @@ export default function ConteudosScreen() {
         </Text>
       )}
       ListHeaderComponent={header}
+      ListFooterComponent={categoriaAtiva && dicasDaCategoria.length > 0 ? (
+        <View style={styles.tipsSection}>
+          <Text variant="titleMedium" style={styles.tipsSectionTitle}>Dicas sobre {categoriaAtiva.nome}</Text>
+          {dicasDaCategoria.map((dica) => (
+            <Card key={dica.id} style={styles.tipCard} elevation={0}>
+              <Card.Content>
+                <View style={styles.tipHeader}>
+                  <MaterialCommunityIcons color={CORES_LAYOUT.chipAtivo} name="lightbulb-on-outline" size={20} />
+                  <Text style={styles.tipTitle}>{dica.titulo || `Dica sobre ${categoriaAtiva.nome}`}</Text>
+                </View>
+                <Text style={styles.tipText}>{dica.texto}</Text>
+              </Card.Content>
+            </Card>
+          ))}
+        </View>
+      ) : null}
       onRefresh={() => void carregarConteudos(true)}
       refreshing={atualizando}
       renderItem={({ item: artigo }) => (
@@ -223,6 +283,12 @@ const styles = StyleSheet.create({
   chipInativo: { backgroundColor: "#FFF", borderColor: "#F0F0F0" },
   chipText: { marginLeft: 8, fontWeight: "500" },
   sectionTitle: { fontWeight: "bold", paddingHorizontal: 20, marginBottom: 16, color: "#000" },
+  tipsSection: { paddingTop: 8, paddingBottom: 8 },
+  tipsSectionTitle: { color: "#000", fontWeight: "700", marginBottom: 12, marginHorizontal: 20 },
+  tipCard: { marginHorizontal: 20, marginBottom: 20, backgroundColor: "#FFF", borderRadius: 16, borderWidth: 1, borderColor: "#F4D7DE" },
+  tipHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8, gap: 8 },
+  tipTitle: { color: "#C43A4A", fontSize: 15, fontWeight: "700", flex: 1 },
+  tipText: { color: "#666", lineHeight: 20 },
   card: { marginHorizontal: 20, marginBottom: 16, backgroundColor: "#FFF", borderRadius: 16, borderWidth: 1, borderColor: "#F0F0F0", overflow: "hidden", elevation: 2 },
   coverImage: { aspectRatio: 16 / 9, width: "100%" },
   cardContent: { paddingTop: 16 },

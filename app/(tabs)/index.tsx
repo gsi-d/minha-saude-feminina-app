@@ -6,7 +6,7 @@ import { Dica } from "@/data/dicas/dicas.types";
 import type { ResumoConteudo } from "@/domain/conteudos/types";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import {
   Avatar,
@@ -23,43 +23,36 @@ const dicasRepository = createDicasRepository();
 const HOME_CARD_CONFIG: Record<enumTipoUsuario, {
   titulo: string;
   subtitulo: string;
-  tagsDicas: string[];
   descricaoVazia: string;
 }> = {
   [enumTipoUsuario.Adolescente]: {
     titulo: "Ciclo Menstrual",
     subtitulo: "Dicas para sua fase de desenvolvimento",
-    tagsDicas: ["menstruação", "bem-estar", "contracepção"],
     descricaoVazia: "Conteúdos sobre ciclo e fluxo aparecerão aqui.",
   },
   [enumTipoUsuario.Gestante]: {
     titulo: "Gestação",
     subtitulo: "Acompanhando sua jornada",
-    tagsDicas: ["saúde", "bem-estar"],
     descricaoVazia: "Informações sobre pré-natal aparecerão aqui.",
   },
   [enumTipoUsuario.Tentante]: {
     titulo: "Planejamento",
     subtitulo: "Conteúdo para sua janela fértil",
-    tagsDicas: ["menstruação", "saúde", "bem-estar"],
     descricaoVazia: "Dicas de fertilidade aparecerão aqui.",
   },
   [enumTipoUsuario.Menopausa]: {
     titulo: "Climatério",
     subtitulo: "Bem-estar nesta nova fase",
-    tagsDicas: ["saúde", "bem-estar"],
     descricaoVazia: "Conteúdos sobre menopausa aparecerão aqui.",
   },
   [enumTipoUsuario.NaoDefinido]: {
     titulo: "Saúde Feminina",
     subtitulo: "Dicas gerais para o seu dia",
-    tagsDicas: ["saúde", "bem-estar"],
     descricaoVazia: "Configure seu perfil para dicas personalizadas.",
   },
   [enumTipoUsuario.Administrador]: {
     titulo: "Painel Admin",
     subtitulo: "Gestão do sistema",
-    tagsDicas: ["saúde", "bem-estar"],
     descricaoVazia: "Nenhum dado pendente.",
   },
 };
@@ -70,13 +63,8 @@ function selecionarConteudoDestaque(
   return conteudos[0] ?? null;
 }
 
-function selecionarDicaAleatoria(dicas: Dica[]): Dica | null {
-  if (dicas.length === 0) {
-    return null;
-  }
-
-  const index = Math.floor(Math.random() * dicas.length);
-  return dicas[index] ?? null;
+function selecionarDicaDoDia(dicas: Dica[]): Dica | null {
+  return dicas[0] ?? null;
 }
 
 export default function HomeScreen() {
@@ -88,27 +76,29 @@ export default function HomeScreen() {
 
 const tipoUsuarioAtual = (usuario?.tipoUsuario as enumTipoUsuario) || enumTipoUsuario.NaoDefinido;
 const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
-  const tagsDicas = useMemo(
-    () => config.tagsDicas,
-    [config.tagsDicas],
-  );
-
   useEffect(() => {
     let ativo = true;
 
     const loadHomeData = async () => {
       try {
-        const [conteudos, dicasPerfil, dicasFallback] = await Promise.all([
-          conteudosRepository.listPublishedByAudience(tipoUsuarioAtual),
-          dicasRepository.listByTipoUsuarioAndTags(tipoUsuarioAtual, tagsDicas),
-          dicasRepository.listByTipoUsuarioAndTags(enumTipoUsuario.NaoDefinido, tagsDicas),
-        ]);
+        const conteudos = await conteudosRepository.listPublishedByAudience(tipoUsuarioAtual);
+
+        let dicaSelecionada: Dica | null = null;
+        try {
+          const [dicasPerfil, dicasFallback] = await Promise.all([
+            dicasRepository.listByTipoUsuario(tipoUsuarioAtual),
+            dicasRepository.listByTipoUsuario(enumTipoUsuario.NaoDefinido),
+          ]);
+
+          dicaSelecionada =
+            selecionarDicaDoDia(dicasPerfil) ?? selecionarDicaDoDia(dicasFallback);
+        } catch {
+          dicaSelecionada = null;
+        }
 
         if (!ativo) return;
         setConteudoDestaque(selecionarConteudoDestaque(conteudos));
-        setDicaDoDia(
-          selecionarDicaAleatoria(dicasPerfil) ?? selecionarDicaAleatoria(dicasFallback),
-        );
+        setDicaDoDia(dicaSelecionada);
       } catch {
         if (!ativo) return;
         setConteudoDestaque(null);
@@ -121,7 +111,7 @@ const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
     return () => {
       ativo = false;
     };
-  }, [tagsDicas, tipoUsuarioAtual]);
+  }, [tipoUsuarioAtual]);
 
   const abrirConteudoDestaque = () => {
     if (!conteudoDestaque) {

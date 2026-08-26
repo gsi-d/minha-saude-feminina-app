@@ -6,6 +6,7 @@ import type {
   ResumoConteudo,
   StatusConteudo,
 } from "../../domain/conteudos/types";
+import { mapTipoUsuarioDbToEnum } from "../../utils/mapTipoUsuarioDb";
 
 export type SupabasePublicoConteudo = "adolescente" | "gestante" | "tentante" | "menopausa";
 export type SupabaseStatusConteudo = "rascunho" | "publicado" | "arquivado";
@@ -70,9 +71,12 @@ const statusDoBanco: Record<SupabaseStatusConteudo, StatusConteudo> = {
 };
 
 export function mapPublicoSupabaseParaDominio(value: unknown): PublicoConteudo | null {
-  return typeof value === "string"
-    ? publicosDoBanco[value as SupabasePublicoConteudo] ?? null
-    : null;
+  const publico = mapTipoUsuarioDbToEnum(
+    typeof value === "string" || typeof value === "number" ? value : null,
+  );
+  return publico === enumTipoUsuario.NaoDefinido || publico === enumTipoUsuario.Administrador
+    ? null
+    : publico;
 }
 
 export function mapPublicoDominioParaSupabase(value: enumTipoUsuario): SupabasePublicoConteudo | null {
@@ -80,9 +84,20 @@ export function mapPublicoDominioParaSupabase(value: enumTipoUsuario): SupabaseP
 }
 
 export function mapStatusSupabaseParaDominio(value: unknown): StatusConteudo | null {
-  return typeof value === "string"
-    ? statusDoBanco[value as SupabaseStatusConteudo] ?? null
-    : null;
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const status = value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (status === "publicado") return "PUBLICADO";
+  if (status === "rascunho") return "RASCUNHO";
+  if (status === "arquivado") return "ARQUIVADO";
+  return statusDoBanco[value as SupabaseStatusConteudo] ?? null;
 }
 
 function obterCategoria(row: SupabaseResumoConteudoRow): SupabaseCategoriaConteudoRow {
