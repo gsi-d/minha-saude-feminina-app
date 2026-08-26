@@ -1,14 +1,3 @@
-<<<<<<< HEAD
-import { CartaoCicloAtivo } from "@/components/CartaoCicloAtivo";
-import { CartaoPrevisao } from "@/components/CartaoPrevisao";
-import { EncerrarRegistroDialog } from "@/components/EncerrarRegistroDialog";
-import { HistoricoRegistros } from "@/components/HistoricoRegistros";
-import { NovoRegistroDialog } from "@/components/NovoRegistroDialog";
-import { useCiclo } from "@/contexts/CicloContext";
-import React, { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
-import { ActivityIndicator, FAB, Text } from "react-native-paper";
-=======
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Text, FAB, ActivityIndicator, Button } from "react-native-paper";
@@ -20,7 +9,6 @@ import { CalendarioCiclos } from "@/components/CalendarioCiclos";
 import { HistoricoRegistros } from "@/components/HistoricoRegistros";
 import { NovoRegistroDialogCalendario } from "@/components/NovoRegistroDialogCalendario";
 import { EncerrarRegistroDialog } from "@/components/EncerrarRegistroDialog";
->>>>>>> agents/menstrual-cycle-tracker-app
 
 export default function CicloScreen() {
   const {
@@ -101,12 +89,7 @@ export default function CicloScreen() {
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-<<<<<<< HEAD
-
-        {registroAtivo && (
-=======
         {registroAtivo ? (
->>>>>>> agents/menstrual-cycle-tracker-app
           <CartaoCicloAtivo
             registro={registroAtivo}
             onEncerrar={handleAbrirEncerrar}

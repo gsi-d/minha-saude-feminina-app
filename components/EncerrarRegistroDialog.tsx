@@ -18,6 +18,15 @@ interface EncerrarRegistroDialogProps {
   onConfirmar: (dataFim: Date) => Promise<void>;
 }
 
+interface MarcacaoData {
+  startingDay?: boolean;
+  endingDay?: boolean;
+  color?: string;
+  textColor?: string;
+}
+
+type MarkedDatesType = Record<string, MarcacaoData>;
+
 export function EncerrarRegistroDialog({
   visivel,
   registro,
@@ -26,71 +35,108 @@ export function EncerrarRegistroDialog({
   onConfirmar,
 }: EncerrarRegistroDialogProps) {
   const hoje = new Date().toISOString().split('T')[0];
-  const [dataFim, setDataFim] = useState(hoje);
+  const [dataFim, setDataFim] = useState<string>(hoje);
 
   const handleConfirmar = async () => {
-    if (registro) {
-      try {
-        await onConfirmar(new Date(dataFim));
-        onFechar();
-      } catch (error) {
-        console.error('Erro ao encerrar:', error);
-      }
+    if (!registro) {
+      return;
+    }
+
+    try {
+      await onConfirmar(new Date(dataFim));
+      onFechar();
+    } catch (error) {
+      console.error('Erro ao encerrar:', error);
     }
   };
 
-  if (!registro) return null;
+  if (!registro) {
+    return null;
+  }
 
-  const duracao = Math.floor(
-    (new Date(dataFim).getTime() - new Date(registro.dataInicio).getTime()) / (1000 * 60 * 60 * 24)
-  ) + 1;
+  const inicioStr = new Date(registro.dataInicio)
+    .toISOString()
+    .split('T')[0];
 
-  const inicioStr = new Date(registro.dataInicio).toISOString().split('T')[0];
+  const duracao =
+    Math.floor(
+      (new Date(dataFim).getTime() -
+        new Date(inicioStr).getTime()) /
+        (1000 * 60 * 60 * 24)
+    ) + 1;
 
-  const markedDates = {
-    [inicioStr]: {
+  const markedDates: MarkedDatesType = {};
+
+  if (inicioStr === dataFim) {
+    markedDates[inicioStr] = {
       startingDay: true,
-      color: '#FFE8F2',
-      textColor: '#D946A6',
-    },
-    [dataFim]: {
       endingDay: true,
       color: '#FFE8F2',
       textColor: '#D946A6',
-    },
-  };
+    };
+  } else {
+    markedDates[inicioStr] = {
+      startingDay: true,
+      color: '#FFE8F2',
+      textColor: '#D946A6',
+    };
 
-  // Marcar datas intermediárias
-  let currentDate = new Date(registro.dataInicio);
-  while (currentDate < new Date(dataFim)) {
-    currentDate.setDate(currentDate.getDate() + 1);
-    const dateStr = currentDate.toISOString().split('T')[0];
-    if (dateStr !== dataFim) {
-      markedDates[dateStr] = {
-        color: '#FFD0E8',
-        textColor: '#D946A6',
-      };
+    let currentDate = new Date(inicioStr);
+    const finalDate = new Date(dataFim);
+
+    while (currentDate < finalDate) {
+      currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+
+      const dateStr = currentDate
+        .toISOString()
+        .split('T')[0];
+
+      if (dateStr !== dataFim) {
+        markedDates[dateStr] = {
+          color: '#FFD0E8',
+          textColor: '#D946A6',
+        };
+      }
     }
+
+    markedDates[dataFim] = {
+      endingDay: true,
+      color: '#FFE8F2',
+      textColor: '#D946A6',
+    };
   }
 
   return (
     <Portal>
-      <Dialog visible={visivel} onDismiss={onFechar} style={styles.dialog}>
+      <Dialog
+        visible={visivel}
+        onDismiss={onFechar}
+        style={styles.dialog}
+      >
         <Dialog.Title>Encerrar Ciclo</Dialog.Title>
+
         <Dialog.Content>
           <ScrollView style={styles.content}>
             <Text style={styles.infoText}>
-              Iniciado em: <Text style={styles.bold}>
-                {new Date(registro.dataInicio).toLocaleDateString('pt-BR')}
+              Iniciado em:{' '}
+              <Text style={styles.bold}>
+                {new Date(
+                  registro.dataInicio
+                ).toLocaleDateString('pt-BR')}
               </Text>
             </Text>
 
             <Divider style={styles.divider} />
 
-            <Text style={styles.label}>Selecione a data de término</Text>
+            <Text style={styles.label}>
+              Selecione a data de término
+            </Text>
+
             <Calendar
               current={dataFim}
-              onDayPress={(day) => setDataFim(day.dateString)}
+              onDayPress={(day) => {
+                setDataFim(day.dateString);
+              }}
               minDate={inicioStr}
               maxDate={hoje}
               markedDates={markedDates}
@@ -121,24 +167,41 @@ export function EncerrarRegistroDialog({
             <Divider style={styles.divider} />
 
             <Text style={styles.label}>Resumo</Text>
+
             <View style={styles.resumo}>
               <View style={styles.resumoItem}>
-                <Text style={styles.resumoLabel}>Data de término</Text>
+                <Text style={styles.resumoLabel}>
+                  Data de término
+                </Text>
+
                 <Text style={styles.resumoValor}>
-                  {new Date(dataFim).toLocaleDateString('pt-BR')}
+                  {new Date(
+                    `${dataFim}T12:00:00`
+                  ).toLocaleDateString('pt-BR')}
                 </Text>
               </View>
+
               <View style={styles.resumoItem}>
-                <Text style={styles.resumoLabel}>Duração</Text>
-                <Text style={styles.resumoValor}>{duracao} dias</Text>
+                <Text style={styles.resumoLabel}>
+                  Duração
+                </Text>
+
+                <Text style={styles.resumoValor}>
+                  {duracao} {duracao === 1 ? 'dia' : 'dias'}
+                </Text>
               </View>
             </View>
           </ScrollView>
         </Dialog.Content>
+
         <Dialog.Actions>
-          <Button onPress={onFechar} disabled={carregando}>
+          <Button
+            onPress={onFechar}
+            disabled={carregando}
+          >
             Cancelar
           </Button>
+
           <Button
             mode="contained"
             onPress={handleConfirmar}
