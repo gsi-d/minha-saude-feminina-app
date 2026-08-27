@@ -10,6 +10,17 @@ import {
 } from './dicas-supabase.mapper';
 import type { Dica } from './dicas.types';
 
+export const DICAS_SELECT = [
+  'ID',
+  'ID_CATEGORIA',
+  'DS_DICA',
+  'TP_PERFIL_ALVO',
+  'DT_EXIBICAO_SUGERIDA',
+  'IS_ATIVO',
+  'DT_CADASTRO',
+  'DT_ATUALIZACAO',
+].join(', ');
+
 function normalizarTag(tag: string) {
   return tag
     .trim()
@@ -60,30 +71,7 @@ export class SupabaseDicasDataSource {
 
     const { data, error } = await client
       .from('TB_DICA')
-      .select([
-        'ID',
-        'ID_CATEGORIA',
-        'DS_DICA',
-        'TP_PERFIL_ALVO',
-        'DT_EXIBICAO_SUGERIDA',
-        'IS_ATIVO',
-        'DT_CADASTRO',
-        'DT_ATUALIZACAO',
-        'TITULO',
-        'TEXTO_CURTO',
-        'PERFIL_ALVO',
-        'TEXTO',
-        'TAG',
-        'TP_USUARIO',
-        'CREATED_AT',
-        'DS_TITULO',
-        'DS_CONTEUDO',
-        'CONTEUDO',
-        'DS_CATEGORIA',
-        'CATEGORIA',
-        'DS_TAG',
-        'FL_ATIVO',
-      ].join(', '))
+      .select(DICAS_SELECT)
       .order('DT_CADASTRO', { ascending: false, nullsFirst: false });
 
     if (error) {
@@ -107,6 +95,7 @@ export class SupabaseDicasDataSource {
         obterDataCadastroDica(primeira),
         obterDataCadastroDica(segunda),
       ));
+
   }
 
   private async listarCategoriasPorId(ids: Array<number | string>): Promise<Map<string, string>> {

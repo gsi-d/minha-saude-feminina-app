@@ -6,6 +6,7 @@ import { createDicasRepository } from "@/data/dicas/dicas.repository";
 import type { Dica } from "@/data/dicas/dicas.types";
 import { extrairCategoriasUnicas, filtrarResumosPorCategoria } from "@/domain/conteudos/conteudos.utils";
 import type { ResumoConteudo } from "@/domain/conteudos/types";
+import { combinarDicas, selecionarDicasDaCategoria } from "@/domain/dicas/dicas.utils";
 import { obterUrlImagemSegura } from "@/components/articles/article-content.utils";
 import { resolveTipoUsuario } from "@/utils/resolveTipoUsuario";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -31,24 +32,6 @@ function mensagemDeErro(error: unknown) {
     if (error.codigo === "SEM_PERMISSAO") return "Sua sessão não tem permissão para acessar estes conteúdos.";
   }
   return "Não foi possível carregar os artigos agora. Tente novamente.";
-}
-
-function normalizarTexto(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-function selecionarDicaRelacionada(dicas: Dica[], categoriaNome?: string) {
-  if (!categoriaNome) return [];
-
-  const categoriaNormalizada = normalizarTexto(categoriaNome);
-  return dicas.filter((dica) => {
-    const categoriaDica = dica.categoriaNome ?? dica.tag;
-    return normalizarTexto(categoriaDica) === categoriaNormalizada;
-  });
 }
 
 export default function ConteudosScreen() {
@@ -91,7 +74,7 @@ export default function ConteudosScreen() {
           dicasRepository.listByTipoUsuario(tipoUsuarioAtual),
           dicasRepository.listByTipoUsuario(enumTipoUsuario.NaoDefinido),
         ]);
-        dicasCarregadas = resultadoDicasPerfil.length > 0 ? resultadoDicasPerfil : resultadoDicasGerais;
+        dicasCarregadas = combinarDicas(resultadoDicasPerfil, resultadoDicasGerais);
       } catch {
         dicasCarregadas = [];
       }
@@ -136,8 +119,8 @@ export default function ConteudosScreen() {
   );
   const categoriaAtiva = categorias.find((categoria) => categoria.id === categoriaAtivaId);
   const dicasDaCategoria = useMemo(
-    () => selecionarDicaRelacionada(dicas, categoriaAtiva?.nome),
-    [categoriaAtiva?.nome, dicas],
+    () => selecionarDicasDaCategoria(dicas, categoriaAtiva),
+    [categoriaAtiva, dicas],
   );
 
   const header = (
