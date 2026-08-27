@@ -2,10 +2,16 @@ import { enumTipoUsuario } from "@/constants/enums";
 import { useAuth } from "@/contexts/AuthContext";
 import { ErroConteudosRepository } from "@/data/conteudos/conteudos-supabase.datasource";
 import { createConteudosRepository } from "@/data/conteudos/conteudos.repository";
+import {
+  normalizarErroDicas,
+  registrarDiagnosticoDicas,
+  type ErroDicasDiagnostico,
+} from "@/data/dicas/dicas-diagnostics";
 import { createDicasRepository } from "@/data/dicas/dicas.repository";
 import type { Dica } from "@/data/dicas/dicas.types";
 import { extrairCategoriasUnicas, filtrarResumosPorCategoria } from "@/domain/conteudos/conteudos.utils";
 import type { ResumoConteudo } from "@/domain/conteudos/types";
+import { combinarDicas, selecionarDicasDaCategoria } from "@/domain/dicas/dicas.utils";
 import { obterUrlImagemSegura } from "@/components/articles/article-content.utils";
 import { resolveTipoUsuario } from "@/utils/resolveTipoUsuario";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -25,30 +31,21 @@ const CORES_LAYOUT = {
   chipBackgroundAtivo: "#E84C71",
 };
 
+interface DiagnosticoDicasTela {
+  status: "consultando" | "sucesso" | "erro";
+  perfil: enumTipoUsuario;
+  quantidadePerfil: number;
+  quantidadeGeral: number;
+  quantidadeCombinada: number;
+  erro: ErroDicasDiagnostico | null;
+}
+
 function mensagemDeErro(error: unknown) {
   if (error instanceof ErroConteudosRepository) {
     if (error.codigo === "CONEXAO") return "Não foi possível conectar. Verifique sua internet e tente novamente.";
     if (error.codigo === "SEM_PERMISSAO") return "Sua sessão não tem permissão para acessar estes conteúdos.";
   }
   return "Não foi possível carregar os artigos agora. Tente novamente.";
-}
-
-function normalizarTexto(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-function selecionarDicaRelacionada(dicas: Dica[], categoriaNome?: string) {
-  if (!categoriaNome) return [];
-
-  const categoriaNormalizada = normalizarTexto(categoriaNome);
-  return dicas.filter((dica) => {
-    const categoriaDica = dica.categoriaNome ?? dica.tag;
-    return normalizarTexto(categoriaDica) === categoriaNormalizada;
-  });
 }
 
 export default function ConteudosScreen() {
@@ -60,6 +57,7 @@ export default function ConteudosScreen() {
   const [carregando, setCarregando] = useState(true);
   const [atualizando, setAtualizando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [diagnosticoDicas, setDiagnosticoDicas] = useState<DiagnosticoDicasTela | null>(null);
   const mountedRef = useRef(true);
   const requestRef = useRef(0);
 
@@ -71,6 +69,14 @@ export default function ConteudosScreen() {
     if (refresh) setAtualizando(true);
     else setCarregando(true);
     setErro(null);
+    setDiagnosticoDicas({
+      status: "consultando",
+      perfil: tipoUsuarioAtual,
+      quantidadePerfil: 0,
+      quantidadeGeral: 0,
+      quantidadeCombinada: 0,
+      erro: null,
+    });
 
     if (!usuario) {
       if (mountedRef.current && requestId === requestRef.current) {
@@ -86,19 +92,48 @@ export default function ConteudosScreen() {
       const resultadoConteudos = await conteudosRepository.listPublishedByAudience(tipoUsuarioAtual);
 
       let dicasCarregadas: Dica[] = [];
+      let proximoDiagnosticoDicas: DiagnosticoDicasTela;
       try {
         const [resultadoDicasPerfil, resultadoDicasGerais] = await Promise.all([
           dicasRepository.listByTipoUsuario(tipoUsuarioAtual),
           dicasRepository.listByTipoUsuario(enumTipoUsuario.NaoDefinido),
         ]);
-        dicasCarregadas = resultadoDicasPerfil.length > 0 ? resultadoDicasPerfil : resultadoDicasGerais;
-      } catch {
+        dicasCarregadas = combinarDicas(resultadoDicasPerfil, resultadoDicasGerais);
+        proximoDiagnosticoDicas = {
+          status: "sucesso",
+          perfil: tipoUsuarioAtual,
+          quantidadePerfil: resultadoDicasPerfil.length,
+          quantidadeGeral: resultadoDicasGerais.length,
+          quantidadeCombinada: dicasCarregadas.length,
+          erro: null,
+        };
+        registrarDiagnosticoDicas("dados entregues à tela", {
+          perfil: tipoUsuarioAtual,
+          quantidadePerfil: resultadoDicasPerfil.length,
+          quantidadeGeral: resultadoDicasGerais.length,
+          quantidadeCombinada: dicasCarregadas.length,
+        });
+      } catch (errorDicas) {
+        const erroNormalizado = normalizarErroDicas(errorDicas);
         dicasCarregadas = [];
+        proximoDiagnosticoDicas = {
+          status: "erro",
+          perfil: tipoUsuarioAtual,
+          quantidadePerfil: 0,
+          quantidadeGeral: 0,
+          quantidadeCombinada: 0,
+          erro: erroNormalizado,
+        };
+        registrarDiagnosticoDicas("falha entre repositório e tela", {
+          perfil: tipoUsuarioAtual,
+          erro: erroNormalizado,
+        }, "error");
       }
 
       if (mountedRef.current && requestId === requestRef.current) {
         setResumos(resultadoConteudos);
         setDicas(dicasCarregadas);
+        setDiagnosticoDicas(proximoDiagnosticoDicas);
       }
     } catch (error) {
       if (mountedRef.current && requestId === requestRef.current) {
@@ -136,8 +171,8 @@ export default function ConteudosScreen() {
   );
   const categoriaAtiva = categorias.find((categoria) => categoria.id === categoriaAtivaId);
   const dicasDaCategoria = useMemo(
-    () => selecionarDicaRelacionada(dicas, categoriaAtiva?.nome),
-    [categoriaAtiva?.nome, dicas],
+    () => selecionarDicasDaCategoria(dicas, categoriaAtiva),
+    [categoriaAtiva, dicas],
   );
 
   const header = (
@@ -149,6 +184,22 @@ export default function ConteudosScreen() {
           Perfil selecionado: <Text style={styles.profileName}>{tipoAtual}</Text>
         </Text>
       </View>
+
+      {__DEV__ && diagnosticoDicas ? (
+        <View style={styles.debugCard}>
+          <Text style={styles.debugTitle}>Diagnóstico de dicas (desenvolvimento)</Text>
+          <Text style={styles.debugText}>Status: {diagnosticoDicas.status}</Text>
+          <Text style={styles.debugText}>Perfil consultado: {diagnosticoDicas.perfil}</Text>
+          <Text style={styles.debugText}>
+            Retorno ao app — perfil: {diagnosticoDicas.quantidadePerfil}, gerais: {diagnosticoDicas.quantidadeGeral}, combinadas: {diagnosticoDicas.quantidadeCombinada}
+          </Text>
+          {diagnosticoDicas.erro ? (
+            <Text style={styles.debugError}>
+              Erro {diagnosticoDicas.erro.code ?? "sem código"}: {diagnosticoDicas.erro.message}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
 
       {categorias.length > 0 ? (
         <View style={styles.filterContainer}>
@@ -277,6 +328,10 @@ const styles = StyleSheet.create({
   bannerTitle: { color: "#FFF", fontWeight: "bold", marginBottom: 8 },
   bannerSubtitle: { color: "#FFF", opacity: 0.9 },
   profileName: { color: "#FFF", fontWeight: "bold" },
+  debugCard: { backgroundColor: "#FFFBEA", borderColor: "#E5B800", borderRadius: 12, borderWidth: 1, marginBottom: 16, marginHorizontal: 20, padding: 12 },
+  debugTitle: { color: "#6B5600", fontSize: 13, fontWeight: "700", marginBottom: 6 },
+  debugText: { color: "#6B5600", fontSize: 12, lineHeight: 18 },
+  debugError: { color: "#A12622", fontSize: 12, lineHeight: 18, marginTop: 4 },
   filterContainer: { marginBottom: 24 },
   filterScroll: { paddingHorizontal: 20, gap: 12 },
   chip: { flexDirection: "row", alignItems: "center", paddingVertical: 8, paddingHorizontal: 16, borderRadius: 24, borderWidth: 1 },
