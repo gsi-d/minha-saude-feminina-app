@@ -1,3 +1,4 @@
+import { CalendarioResumo } from "@/components/CalendarioResumo";
 import { enumTipoUsuario } from "@/constants/enums";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCiclo } from "@/contexts/CicloContext";
@@ -5,11 +6,16 @@ import { createConteudosRepository } from "@/data/conteudos/conteudos.repository
 import { createDicasRepository } from "@/data/dicas/dicas.repository";
 import { Dica } from "@/data/dicas/dicas.types";
 import type { ResumoConteudo } from "@/domain/conteudos/types";
-import { CalendarioResumo } from "@/components/CalendarioResumo";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import {
   Avatar,
   Card,
@@ -19,14 +25,24 @@ import {
   useTheme,
 } from "react-native-paper";
 
+const CORES_LAYOUT = {
+  headerBackground: "#9B51E0",
+  chipAtivo: "#E84C71",
+  chipInativo: "#666666",
+  chipBackgroundAtivo: "#E84C71",
+};
+
 const conteudosRepository = createConteudosRepository();
 const dicasRepository = createDicasRepository();
 
-const HOME_CARD_CONFIG: Record<enumTipoUsuario, {
-  titulo: string;
-  subtitulo: string;
-  descricaoVazia: string;
-}> = {
+const HOME_CARD_CONFIG: Record<
+  enumTipoUsuario,
+  {
+    titulo: string;
+    subtitulo: string;
+    descricaoVazia: string;
+  }
+> = {
   [enumTipoUsuario.Adolescente]: {
     titulo: "Ciclo Menstrual",
     subtitulo: "Dicas para sua fase de desenvolvimento",
@@ -74,47 +90,56 @@ export default function HomeScreen() {
   const router = useRouter();
   const { usuario } = useAuth();
   const { registros } = useCiclo();
-  const [conteudoDestaque, setConteudoDestaque] = useState<ResumoConteudo | null>(null);
+  const [conteudoDestaque, setConteudoDestaque] =
+    useState<ResumoConteudo | null>(null);
   const [dicaDoDia, setDicaDoDia] = useState<Dica | null>(null);
+  const [atualizando, setAtualizando] = useState(false);
+  const [carregando, setCarregando] = useState(true);
 
-const tipoUsuarioAtual = (usuario?.tipoUsuario as enumTipoUsuario) || enumTipoUsuario.NaoDefinido;
-const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
+  const tipoUsuarioAtual =
+    (usuario?.tipoUsuario as enumTipoUsuario) || enumTipoUsuario.NaoDefinido;
+  const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
+
   useEffect(() => {
-    let ativo = true;
-
-    const loadHomeData = async () => {
-      try {
-        const conteudos = await conteudosRepository.listPublishedByAudience(tipoUsuarioAtual);
-
-        let dicaSelecionada: Dica | null = null;
-        try {
-          const [dicasPerfil, dicasFallback] = await Promise.all([
-            dicasRepository.listByTipoUsuario(tipoUsuarioAtual),
-            dicasRepository.listByTipoUsuario(enumTipoUsuario.NaoDefinido),
-          ]);
-
-          dicaSelecionada =
-            selecionarDicaDoDia(dicasPerfil) ?? selecionarDicaDoDia(dicasFallback);
-        } catch {
-          dicaSelecionada = null;
-        }
-
-        if (!ativo) return;
-        setConteudoDestaque(selecionarConteudoDestaque(conteudos));
-        setDicaDoDia(dicaSelecionada);
-      } catch {
-        if (!ativo) return;
-        setConteudoDestaque(null);
-        setDicaDoDia(null);
-      }
-    };
-
-    void loadHomeData();
-
-    return () => {
-      ativo = false;
-    };
+    void carregarDadosHome();
   }, [tipoUsuarioAtual]);
+
+  const carregarDadosHome = async (refresh = false) => {
+    try {
+      if (refresh) {
+        setAtualizando(true);
+      } else {
+        setCarregando(true);
+      }
+
+      const conteudos =
+        await conteudosRepository.listPublishedByAudience(tipoUsuarioAtual);
+
+      let dicaSelecionada: Dica | null = null;
+
+      try {
+        const [dicasPerfil, dicasFallback] = await Promise.all([
+          dicasRepository.listByTipoUsuario(tipoUsuarioAtual),
+          dicasRepository.listByTipoUsuario(enumTipoUsuario.NaoDefinido),
+        ]);
+
+        dicaSelecionada =
+          selecionarDicaDoDia(dicasPerfil) ??
+          selecionarDicaDoDia(dicasFallback);
+      } catch {
+        dicaSelecionada = null;
+      }
+
+      setConteudoDestaque(selecionarConteudoDestaque(conteudos));
+      setDicaDoDia(dicaSelecionada);
+    } catch {
+      setConteudoDestaque(null);
+      setDicaDoDia(null);
+    } finally {
+      setCarregando(false);
+      setAtualizando(false);
+    }
+  };
 
   const abrirConteudoDestaque = () => {
     if (!conteudoDestaque) {
@@ -130,6 +155,15 @@ const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
     });
   };
 
+  if (carregando) {
+    return (
+      <View style={styles.centeredState}>
+        <ActivityIndicator color={CORES_LAYOUT.headerBackground} size="large" />
+        <Text style={styles.stateText}>Carregando home</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       style={[
@@ -140,6 +174,14 @@ const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
       ]}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={atualizando}
+          onRefresh={() => carregarDadosHome(true)}
+          colors={[theme.colors.primary]}
+          tintColor={theme.colors.primary}
+        />
+      }
     >
       <Surface
         style={[
@@ -208,37 +250,25 @@ const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
 
       <View style={styles.summaryContainer}>
         <View style={styles.summaryItem}>
-          <Text style={styles.summaryNumber}>
-            08
-          </Text>
+          <Text style={styles.summaryNumber}>08</Text>
 
-          <Text style={styles.summaryLabel}>
-            Dia do ciclo
-          </Text>
+          <Text style={styles.summaryLabel}>Dia do ciclo</Text>
         </View>
 
         <View style={styles.summaryDivider} />
 
         <View style={styles.summaryItem}>
-          <Text style={styles.summaryNumber}>
-            02
-          </Text>
+          <Text style={styles.summaryNumber}>02</Text>
 
-          <Text style={styles.summaryLabel}>
-            Lembretes
-          </Text>
+          <Text style={styles.summaryLabel}>Lembretes</Text>
         </View>
 
         <View style={styles.summaryDivider} />
 
         <View style={styles.summaryItem}>
-          <Text style={styles.summaryNumber}>
-            03
-          </Text>
+          <Text style={styles.summaryNumber}>03</Text>
 
-          <Text style={styles.summaryLabel}>
-            Registros
-          </Text>
+          <Text style={styles.summaryLabel}>Registros</Text>
         </View>
       </View>
 
@@ -253,8 +283,7 @@ const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
               style={[
                 styles.iconContainer,
                 {
-                  backgroundColor:
-                    theme.colors.primaryContainer,
+                  backgroundColor: theme.colors.primaryContainer,
                 },
               ]}
             >
@@ -267,10 +296,7 @@ const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
             </View>
 
             <View style={styles.cardHeaderText}>
-              <Text
-                variant="titleLarge"
-                style={styles.cardTitle}
-              >
+              <Text variant="titleLarge" style={styles.cardTitle}>
                 {config.titulo}
               </Text>
 
@@ -280,18 +306,13 @@ const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
             </View>
           </View>
 
-          <Text
-            variant="bodyMedium"
-            style={styles.cardDescription}
-          >
+          <Text variant="bodyMedium" style={styles.cardDescription}>
             {conteudoDestaque?.resumo ?? config.descricaoVazia}
           </Text>
         </Card.Content>
       </Card>
 
-      {registros.length > 0 && (
-        <CalendarioResumo registros={registros} />
-      )}
+      {registros.length > 0 && <CalendarioResumo registros={registros} />}
 
       <Card style={styles.tipCard} elevation={0}>
         <Card.Content>
@@ -308,19 +329,14 @@ const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
             </Text>
           </View>
 
-          <Text
-            variant="bodyMedium"
-            style={styles.tipText}
-          >
+          <Text variant="bodyMedium" style={styles.tipText}>
             {dicaDoDia?.texto ??
               "Em breve, você verá dicas rápidas e personalizadas para o seu perfil aqui."}
           </Text>
         </Card.Content>
       </Card>
 
-      <Text style={styles.sectionTitle}>
-        Acessos rápidos
-      </Text>
+      <Text style={styles.sectionTitle}>Acessos rápidos</Text>
 
       <View style={styles.quickAccessContainer}>
         <Card
@@ -344,17 +360,11 @@ const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
               />
             </View>
 
-            <Text
-              variant="titleMedium"
-              style={styles.smallCardTitle}
-            >
+            <Text variant="titleMedium" style={styles.smallCardTitle}>
               Conteúdos
             </Text>
 
-            <Text
-              variant="bodySmall"
-              style={styles.smallCardText}
-            >
+            <Text variant="bodySmall" style={styles.smallCardText}>
               Artigos e dicas personalizadas.
             </Text>
           </Card.Content>
@@ -381,17 +391,11 @@ const config = HOME_CARD_CONFIG[tipoUsuarioAtual];
               />
             </View>
 
-            <Text
-              variant="titleMedium"
-              style={styles.smallCardTitle}
-            >
+            <Text variant="titleMedium" style={styles.smallCardTitle}>
               Registros
             </Text>
 
-            <Text
-              variant="bodySmall"
-              style={styles.smallCardText}
-            >
+            <Text variant="bodySmall" style={styles.smallCardText}>
               Sintomas, hábitos e acompanhamento.
             </Text>
           </Card.Content>
@@ -734,4 +738,12 @@ const styles = StyleSheet.create({
     color: "#666",
     lineHeight: 18,
   },
+  centeredState: {
+    alignItems: "center",
+    backgroundColor: "#FFF6F8",
+    flex: 1,
+    justifyContent: "center",
+    padding: 32,
+  },
+  stateText: { color: "#666", marginTop: 14 },
 });
