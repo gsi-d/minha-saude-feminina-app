@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 import { enumTipoUsuario } from "../constants/enums";
 import * as dicasDataSource from "../data/dicas/dicas-supabase.datasource";
@@ -57,23 +60,16 @@ test("seleciona dicas pelo ID da categoria e usa nome somente como fallback", as
   );
 });
 
-test("normaliza erros do Supabase para diagnóstico seguro", async () => {
-  const diagnostics = await import("../data/dicas/dicas-diagnostics").catch(() => null);
+test("não mantém instrumentação temporária de dicas no app", () => {
+  const diretorioTestes = dirname(fileURLToPath(import.meta.url));
+  const caminhoTela = resolve(diretorioTestes, "../app/(tabs)/conteudos.tsx");
+  const caminhoDataSource = resolve(diretorioTestes, "../data/dicas/dicas-supabase.datasource.ts");
+  const caminhoDiagnostico = resolve(diretorioTestes, "../data/dicas/dicas-diagnostics.ts");
+  const tela = readFileSync(caminhoTela, "utf8");
+  const dataSource = readFileSync(caminhoDataSource, "utf8");
 
-  assert.ok(diagnostics, "o módulo de diagnóstico deve existir");
-  assert.deepEqual(
-    diagnostics.normalizarErroDicas({
-      code: "42703",
-      message: "column does not exist",
-      details: "DS_TITULO",
-      hint: null,
-      session: { access_token: "nao-deve-vazar" },
-    }),
-    {
-      code: "42703",
-      message: "column does not exist",
-      details: "DS_TITULO",
-      hint: null,
-    },
-  );
+  assert.equal(tela.includes("Diagnóstico de dicas"), false);
+  assert.equal(tela.includes("registrarDiagnosticoDicas"), false);
+  assert.equal(dataSource.includes("registrarDiagnosticoDicas"), false);
+  assert.equal(existsSync(caminhoDiagnostico), false);
 });

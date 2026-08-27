@@ -1,6 +1,5 @@
 import { enumTipoUsuario } from '../../constants/enums';
 import { getSupabaseClient } from '../../services/supabase/client';
-import { normalizarErroDicas, registrarDiagnosticoDicas } from './dicas-diagnostics';
 import {
   dicaCorrespondeAoTipoUsuario,
   dicaEstaAtiva,
@@ -67,13 +66,8 @@ function compararDicasPorExibicaoSugerida(primeira: Dica, segunda: Dica) {
 }
 
 export class SupabaseDicasDataSource {
-  private async listarDicas(tipoUsuario: enumTipoUsuario): Promise<SupabaseDicaRow[]> {
+  private async listarDicas(): Promise<SupabaseDicaRow[]> {
     const client = getSupabaseClient();
-
-    registrarDiagnosticoDicas('consulta iniciada', {
-      tabela: 'TB_DICA',
-      perfil: tipoUsuario,
-    });
 
     const { data, error } = await client
       .from('TB_DICA')
@@ -81,27 +75,17 @@ export class SupabaseDicasDataSource {
       .order('DT_CADASTRO', { ascending: false, nullsFirst: false });
 
     if (error) {
-      registrarDiagnosticoDicas('erro na consulta', {
-        tabela: 'TB_DICA',
-        perfil: tipoUsuario,
-        erro: normalizarErroDicas(error),
-      }, 'error');
       throw error;
     }
 
     const rows = (data ?? []) as unknown as SupabaseDicaRow[];
-    registrarDiagnosticoDicas('resposta recebida do banco', {
-      tabela: 'TB_DICA',
-      perfil: tipoUsuario,
-      quantidadeBruta: rows.length,
-    });
     const categoriasPorId = await this.listarCategoriasPorId(
       rows
         .map((row) => row.ID_CATEGORIA)
         .filter((value): value is number | string => value != null && (typeof value === 'number' || typeof value === 'string')),
     );
 
-    const rowsAtivas = rows
+    return rows
       .map((row) => ({
         ...row,
         CATEGORIA_NOME: row.ID_CATEGORIA != null ? categoriasPorId.get(String(row.ID_CATEGORIA)) ?? null : null,
@@ -112,15 +96,6 @@ export class SupabaseDicasDataSource {
         obterDataCadastroDica(segunda),
       ));
 
-    registrarDiagnosticoDicas('filtro de dicas ativas concluído', {
-      tabela: 'TB_DICA',
-      perfil: tipoUsuario,
-      quantidadeBruta: rows.length,
-      quantidadeAtiva: rowsAtivas.length,
-      categoriasEncontradas: categoriasPorId.size,
-    });
-
-    return rowsAtivas;
   }
 
   private async listarCategoriasPorId(ids: Array<number | string>): Promise<Map<string, string>> {
@@ -136,11 +111,6 @@ export class SupabaseDicasDataSource {
       .in('ID', idsUnicos);
 
     if (error) {
-      registrarDiagnosticoDicas('erro na consulta de categorias', {
-        tabela: 'TB_CATEGORIA',
-        quantidadeIds: idsUnicos.length,
-        erro: normalizarErroDicas(error),
-      }, 'error');
       throw error;
     }
 
@@ -156,25 +126,17 @@ export class SupabaseDicasDataSource {
   }
 
   async listByTipoUsuario(tipoUsuario: enumTipoUsuario): Promise<Dica[]> {
-    const rows = await this.listarDicas(tipoUsuario);
+    const rows = await this.listarDicas();
 
-    const dicas = rows
+    return rows
       .filter((row) => dicaCorrespondeAoTipoUsuario(row, tipoUsuario))
       .map(mapSupabaseDicaRowToDomain)
       .sort(compararDicasPorExibicaoSugerida);
-
-    registrarDiagnosticoDicas('filtro de perfil concluído', {
-      perfil: tipoUsuario,
-      quantidadeAtiva: rows.length,
-      quantidadeCompativel: dicas.length,
-    });
-
-    return dicas;
   }
 
   async listByTipoUsuarioAndTags(tipoUsuario: enumTipoUsuario, tags: string[]): Promise<Dica[]> {
     const tagsNormalizadas = tags.map(normalizarTag).filter(Boolean);
-    const rows = await this.listarDicas(tipoUsuario);
+    const rows = await this.listarDicas();
 
     return rows
       .filter((row) => dicaCorrespondeAoTipoUsuario(row, tipoUsuario))
